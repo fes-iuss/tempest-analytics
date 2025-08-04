@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bear Hunt Summary</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #ffffff;/*#f0f2f5;*/
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 180px;
+      background-color: #ffffff;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    .sidebar img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    /* Main content area */
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .chart-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .chart-container {
+      flex: 1 1 45%;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar with Logo -->
+  <div class="sidebar">
+    <img src="c:/Users/jgetzfred/OneDrive - CQuence Health/Desktop/Stuff/logo.png" alt="Company Logo">
+    <!-- Optional: company name, navigation, etc. -->
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <h1>Bear Hunt Summary</h1>
+
+    <!-- Top Row -->
+    <div class="chart-row">
+      <div class="chart-container">
+        <canvas id="comboChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="totalDamageChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="chart-row">
+      <div class="chart-container">
+        <canvas id="dualDamageChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="avgDamageChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      { date: '7/5/2025', rallies: 34, totalDamage: 84354866, avgDamage: 2481025.471 },
+      { date: '7/7/2025', rallies: 59, totalDamage: 189134043, avgDamage: 3205661.746 },
+      { date: '7/9/2025', rallies: 51, totalDamage: 177480213, avgDamage: 3480004.176 },
+      { date: '7/11/2025', rallies: 41, totalDamage: 163228840, avgDamage: 3981191.22 },
+      { date: '7/13/2025', rallies: 53, totalDamage: 243204676, avgDamage: 4588767.472 },
+      { date: '7/15/2025', rallies: 64, totalDamage: 347881427, avgDamage: 5435647.297 },
+      { date: '7/17/2025', rallies: 57, totalDamage: 441002978, avgDamage: 7736894.351 },
+      { date: '7/19/2025', rallies: 60, totalDamage: 505465361, avgDamage: 8424422.683 },
+      { date: '7/21/2025', rallies: 48, totalDamage: 730164014, avgDamage: 15211750.29 },
+      { date: '7/23/2025', rallies: 42, totalDamage: 673438211, avgDamage: 16034243.12 }
+    ];
+
+    const labels = data.map(item => item.date);
+    const rallies = data.map(item => item.rallies);
+    const totalDamage = data.map(item => item.totalDamage);
+    const avgDamage = data.map(item => item.avgDamage);
+
+    // Combo Chart
+    new Chart(document.getElementById("comboChart"), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Rallies',
+            data: rallies,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            yAxisID: 'y'
+          },
+          {
+            type: 'line',
+            label: 'Total Damage',
+            data: totalDamage,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 2,
+            tension: 0.3,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Rallies (Bar) and Total Damage (Line)',
+            font: { size: 18 }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Rallies' }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: 'Total Damage' },
+            grid: { drawOnChartArea: false },
+            ticks: {
+              callback: value => value.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+
+    // Total Damage
+    new Chart(document.getElementById("totalDamageChart"), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Total Damage',
+          data: totalDamage,
+          borderColor: '#dc3545',
+          backgroundColor: '#dc3545',
+          tension: 0.3,
+          pointBackgroundColor: '#dc3545'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Total Damage Over Time',
+            font: { size: 18 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: value => value.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+
+    // Average Damage
+    new Chart(document.getElementById("avgDamageChart"), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Average Damage',
+          data: avgDamage,
+          borderColor: '#28a745',
+          backgroundColor: '#28a745',
+          tension: 0.3,
+          pointBackgroundColor: '#28a745'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Average Damage Over Time',
+            font: { size: 18 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: value => value.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+
+    // Dual Damage Chart
+    new Chart(document.getElementById("dualDamageChart"), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Total Damage',
+            data: totalDamage,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            yAxisID: 'y1',
+            tension: 0.3
+          },
+          {
+            label: 'Average Damage',
+            data: avgDamage,
+            borderColor: 'rgba(40, 167, 69, 1)',
+            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+            yAxisID: 'y2',
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Total vs. Average Damage (Dual Axes)',
+            font: { size: 18 }
+          }
+        },
+        scales: {
+          y1: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Total Damage' },
+            ticks: {
+              callback: value => value.toLocaleString()
+            }
+          },
+          y2: {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: 'Average Damage' },
+            grid: { drawOnChartArea: false },
+            ticks: {
+              callback: value => value.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
