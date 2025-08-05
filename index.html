@@ -63,6 +63,17 @@
       width: 100% !important;
       height: auto !important;
     }
+    
+    @media only screen and (max-width: 620px) {
+      /* For mobile phones: */
+      .sidebar{
+        display:none;
+      }
+      .main {
+        width: 100%;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -82,18 +93,23 @@
         <canvas id="comboChart"></canvas>
       </div>
       <div class="chart-container">
-        <canvas id="totalDamageChart"></canvas>
+        <canvas id="dualDamageChart"></canvas>
       </div>
     </div>
 
     <!-- Bottom Row -->
     <div class="chart-row">
       <div class="chart-container">
-        <canvas id="dualDamageChart"></canvas>
+        <canvas id="totalDamageChart"></canvas>
       </div>
       <div class="chart-container">
         <canvas id="avgDamageChart"></canvas>
       </div>
+    </div>
+
+    <!-- Bottom Horizontal Bar -->
+    <div class="chart-container wide">
+      <canvas id="memberDamageChart"></canvas>
     </div>
   </div>
 
@@ -121,6 +137,51 @@
     const totalDamage = data.map(item => item.totalDamage);
     const avgDamage = data.map(item => item.avgDamage);
 
+
+  const indData= [
+      { date: '7/21/2025', member: 'EggHo', damage: 65430631 },
+      { date: '7/21/2025', member: 'NoFear', damage: 49215239 },
+      { date: '7/21/2025', member: 'Fes', damage: 40347802 },
+      { date: '7/21/2025', member: '古魂Soul', damage: 33939942 },
+      { date: '7/21/2025', member: 'OddSoul', damage: 32898590 },
+      { date: '7/21/2025', member: 'Pimpchicken', damage: 30278060 },
+      { date: '7/21/2025', member: 'Lord Montblanc', damage: 28853221 },
+      { date: '7/21/2025', member: 'Skull60', damage: 28196154 },
+      { date: '7/21/2025', member: 'Junebug', damage: 27480030 },
+      { date: '7/21/2025', member: 'Lord Opt2mst', damage: 26177029 },
+      { date: '7/21/2025', member: 'flying clouds', damage: 26938062 },
+      { date: '7/21/2025', member: 'crosad', damage: 25138606 },
+      { date: '7/21/2025', member: 'SARICICEK', damage: 24002800 },
+      { date: '7/21/2025', member: 'MackeBoi', damage: 23369489 },
+      { date: '7/21/2025', member: 'Boondock', damage: 23082113 },
+      { date: '7/21/2025', member: 'Dmitch', damage: 21799324 },
+      { date: '7/21/2025', member: 'Music', damage: 21042466 },
+      { date: '7/21/2025', member: 'lord bacon', damage: 20920945 },
+      { date: '7/21/2025', member: 'Brink!', damage: 20322403 },
+      { date: '7/21/2025', member: 'Coop', damage: 20077205 },
+      { date: '7/21/2025', member: 'Lady Melisande', damage: 18824673 },
+      { date: '7/21/2025', member: 'Lord Rocking', damage: 18168500 },
+      { date: '7/21/2025', member: 'Basteeboi', damage: 18077715 },
+      { date: '7/21/2025', member: 'Wanye', damage: 14210938 },
+      { date: '7/21/2025', member: 'Dirty_Work', damage: 9774256 },
+      { date: '7/21/2025', member: 'Realm', damage: 9306657 },
+      { date: '7/21/2025', member: 'Rucksack214', damage: 9261859 },
+      { date: '7/21/2025', member: 'JibJab', damage: 8750764 },
+      { date: '7/21/2025', member: 'Ramshackle', damage: 8689552 },
+      { date: '7/21/2025', member: 'TomTom', damage: 7693667 },
+      { date: '7/21/2025', member: 'Streetglide16', damage: 6993365 },
+      { date: '7/21/2025', member: 'Kelossal', damage: 4888782 },
+      { date: '7/21/2025', member: 'Snap:alprofessor', damage: 2787166 },
+      { date: '7/21/2025', member: 'TuPutaMadreOG', damage: 2488918 },
+      { date: '7/21/2025', member: 'Defender', damage: 388972 },
+      { date: '7/21/2025', member: 'Elaldi06', damage: 348119 },
+   ];
+
+    const indLabels = indData.map(item => item.date);    
+    const members = indData.map(item => item.member);
+    const memberDamage = indData.map(item => item.damage);
+
+  
     // Combo Chart
     new Chart(document.getElementById("comboChart"), {
       type: 'bar',
@@ -296,6 +357,27 @@
             }
           }
         }
+      }
+    });
+
+    
+    // Member Horizontal Bar
+    new Chart(document.getElementById("memberDamageChart"), {
+      type: "bar",
+      data: {
+        labels: members,
+        datasets: [{
+          label: "Damage",
+          data: memberDamage,
+          backgroundColor: "rgba(75, 192, 192, 0.6)"
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: {
+          x: { beginAtZero: true }
+        },
+        plugins: { zoom: { enabled: false } }
       }
     });
   </script>
