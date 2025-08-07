@@ -3,37 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bear Hunt Summary</title>
-
+  <title>Tempest Alliance</title>
+  
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #ffffff;/*#f0f2f5;*/
-      display: flex;
+      background: linear-gradient(to bottom right, #1e1e2f, #2c3e50);
+      color: #fff;
+      margin: 0;
+      padding: 0;
     }
-
-    /* Sidebar */
-    .sidebar {
-      width: 180px;
-      background-color: #ffffff;
-      border-right: 1px solid #ccc;
+    header {
+      background-color: #111;
+      padding: 1em;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 20px 10px;
+      justify-content: space-between;
+    }
+    header img {
+      height: 60px;
+    }
+    header h1 {
+      margin-left: 1em;
+      font-size: 1.5em;
+      flex: 1;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #222;
+    }
+    nav button {
+      padding: 1em 2em;
+      background: none;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    nav button:hover,
+    nav button.active {
+      background-color: #444;
+    }
+    main {
+      padding: 2em;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    .motto {
+      text-align: center;
+      font-size: 1.2em;
+      margin-top: 0.5em;
+      font-style: italic;
+      color: #aaa;
     }
 
-    .sidebar img {
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 20px;
-    }
-
-    /* Main content area */
+    /* Main content area 
     .main {
       flex: 1;
       padding: 20px;
@@ -42,7 +74,7 @@
     h1 {
       text-align: center;
       margin-bottom: 40px;
-    }
+    }*/
 
     .chart-row {
       display: flex;
@@ -63,55 +95,94 @@
       width: 100% !important;
       height: auto !important;
     }
-    
-    @media only screen and (max-width: 620px) {
-      /* For mobile phones: */
-      .sidebar{
-        display:none;
-      }
-      .main {
-        width: 100%;
-      }
-    }
-
   </style>
 </head>
 <body>
 
-  <!-- Sidebar with Logo -->
-  <div class="sidebar">
-    <img src="img/logo.png" alt="Tempest Logo">
-  </div>
+  <header>
+    <img src="img/logo.png" alt="Tempest Alliance Logo" />
+    <h1>Tempest Alliance</h1>
+  </header>
+  <div class="motto">"For the Stormpire"</div>
 
-  <!-- Main content -->
-  <div class="main">
-    <h1>Bear Hunt Summary</h1>
+  <nav>
+    <button class="tab-btn active" onclick="showTab('home')">Home</button>
+    <button class="tab-btn" onclick="showTab('about')">About Us</button>
+    <button class="tab-btn" onclick="showTab('discord')">Discord</button>
+    <button class="tab-btn" onclick="showTab('analytics')">Analytics</button>
+  </nav>
 
-    <!-- Top Row -->
-    <div class="chart-row">
-      <div class="chart-container">
-        <canvas id="comboChart"></canvas>
-      </div>
-      <div class="chart-container">
-        <canvas id="dualDamageChart"></canvas>
-      </div>
-    </div>
+  <main>
+    <section id="home" class="active">
+      <h2>Welcome to Tempest Alliance</h2>
+      <p>We are an elite force forged in the heart of battle and sharpened by strategy. As a top-tier alliance in Kingshot, we dominate the leaderboards with ruthless precision, tactical coordination, and unbreakable loyalty. Whether it's PvP, raids, or large-scale alliance wars, we bring the storm.</p>
+      <p>This isn’t just a clan — it’s a brotherhood. A proving ground. A war machine.</p>
+      <p>If you're looking for casual play, keep scrolling. If you're looking to rise with the best — welcome to The Tempest Alliance.</p>
+    </section>
 
-    <!-- Bottom Row -->
-    <div class="chart-row">
-      <div class="chart-container">
-        <canvas id="totalDamageChart"></canvas>
-      </div>
-      <div class="chart-container">
-        <canvas id="avgDamageChart"></canvas>
-      </div>
-    </div>
+    <section id="about">
+      <h2>About Us</h2>
+      <p>The Tempest Alliance is more than just an elite gaming alliance — it is a force of nature. Forged in fire, tempered by war, and united under a single banner, we are warriors, tacticians, and champions of conquest. We battle for our homeland — the Stormpire — and carry its name into every arena with thunder at our backs.</p>
 
-    <!-- Bottom Horizontal Bar -->
-    <div class="chart-container wide">
-      <canvas id="memberDamageChart"></canvas>
-    </div>
-  </div>
+      <h2>Where It All Began</h2>
+      <p>Our story begins with Empire — the original alliance founded in early 2025 by the visionary and battle-hardened leader, Boondock. Under his command, Empire rose quickly, cutting a path through Kingshot with relentless precision. Boondock wasn’t just a founder — he was a symbol of strength, leading from the front and inspiring a new generation of fighters to stand tall in the face of impossible odds.</p>
+      <p>But Boondock had a greater vision — not just for victory, but for unity. In an unprecedented move, Empire joined forces with the formidable warriors of Stormforged, a powerful ally known for their raw aggression and strategic cunning.</p>
+      <p>This was not a compromise — it was an evolution.</p>
+
+      <h2>The Birth of the Storm</h2>
+      <p>From the fusion of Empire and Stormforged, a new alliance emerged: The Tempest Alliance. More than the sum of its parts, Tempest was born not in peace, but in the eye of the storm — and it has only grown more powerful since.</p>
+      <p>Boondock’s legacy lives on, honored by every member who fights under the banner he helped raise. As our ranks swelled and our influence expanded, command was passed to a new leader — Junebug, our current R5, a master tactician and charismatic unifier. With Boondock’s fire and Junebug’s mind, we don’t just survive — we dominate.</p>
+
+      <h2>Who We Are Now</h2>
+      <p>Today, The Tempest Alliance is a disciplined war machine and a brotherhood of players who refuse to be average. We are battle-hardened veterans and hungry new blood, strategists and shock troops, scouts and siege masters. We communicate. We adapt. We strike fast and hit hard.</p>
+      <p>Whether in PvP skirmishes, kingdom-spanning wars, or the defense of the Stormpire itself, we fight as one — not just for glory, but for each other.</p>
+
+      <br>
+      <hr>
+      <p>We were Empire. We became the Storm.</p>
+      <p>We are Tempest Alliance.</p>
+      <p>Join us — and become the storm.</p>
+      <hr>
+    </section>
+
+    <section id="discord">
+      <h2>Join Us on Discord</h2>
+      <p>Our Discord server is the heart of our operations. Chat, strategize, and laugh with fellow members.</p>
+      <p><strong>Invite Link:</strong> <a href="https://discord.gg/3AK4t9wFKb">https://discord.gg/3AK4t9wFKb</a></p>
+    </section>
+
+    <section id="analytics">
+      <h2>Analytics Dashboard</h2>
+      <div class="main">
+        <h1>Bear Hunt Summary</h1>
+
+        <!-- Top Row -->
+        <div class="chart-row">
+        <div class="chart-container">
+            <canvas id="comboChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="dualDamageChart"></canvas>
+        </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="chart-row">
+        <div class="chart-container">
+            <canvas id="totalDamageChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="avgDamageChart"></canvas>
+        </div>
+        </div>
+
+        <!-- Bottom Horizontal Bar -->
+        <div class="chart-container wide">
+        <canvas id="memberDamageChart"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script>
     const data = [
@@ -130,6 +201,8 @@
       { date: '7/30/2025', rallies: 57, totalDamage: 969316059, avgDamage: 17005544.8947368 },
       { date: '8/1/2025', rallies: 60, totalDamage: 1221426445, avgDamage: 20357107.4166667 },
       { date: '8/3/2025', rallies: 65, totalDamage: 1209921742, avgDamage: 18614180.6461538 },
+      { date: '8/5/2025', rallies: 60, totalDamage: 1254988688, avgDamage: 20916478.1333333 },
+
    ];
 
     const labels = data.map(item => item.date);
@@ -139,42 +212,46 @@
 
 
   const indData= [
-      { date: '7/21/2025', member: 'EggHo', damage: 65430631 },
-      { date: '7/21/2025', member: 'NoFear', damage: 49215239 },
-      { date: '7/21/2025', member: 'Fes', damage: 40347802 },
-      { date: '7/21/2025', member: '古魂Soul', damage: 33939942 },
-      { date: '7/21/2025', member: 'OddSoul', damage: 32898590 },
-      { date: '7/21/2025', member: 'Pimpchicken', damage: 30278060 },
-      { date: '7/21/2025', member: 'Lord Montblanc', damage: 28853221 },
-      { date: '7/21/2025', member: 'Skull60', damage: 28196154 },
-      { date: '7/21/2025', member: 'Junebug', damage: 27480030 },
-      { date: '7/21/2025', member: 'Lord Opt2mst', damage: 26177029 },
-      { date: '7/21/2025', member: 'flying clouds', damage: 26938062 },
-      { date: '7/21/2025', member: 'crosad', damage: 25138606 },
-      { date: '7/21/2025', member: 'SARICICEK', damage: 24002800 },
-      { date: '7/21/2025', member: 'MackeBoi', damage: 23369489 },
-      { date: '7/21/2025', member: 'Boondock', damage: 23082113 },
-      { date: '7/21/2025', member: 'Dmitch', damage: 21799324 },
-      { date: '7/21/2025', member: 'Music', damage: 21042466 },
-      { date: '7/21/2025', member: 'lord bacon', damage: 20920945 },
-      { date: '7/21/2025', member: 'Brink!', damage: 20322403 },
-      { date: '7/21/2025', member: 'Coop', damage: 20077205 },
-      { date: '7/21/2025', member: 'Lady Melisande', damage: 18824673 },
-      { date: '7/21/2025', member: 'Lord Rocking', damage: 18168500 },
-      { date: '7/21/2025', member: 'Basteeboi', damage: 18077715 },
-      { date: '7/21/2025', member: 'Wanye', damage: 14210938 },
-      { date: '7/21/2025', member: 'Dirty_Work', damage: 9774256 },
-      { date: '7/21/2025', member: 'Realm', damage: 9306657 },
-      { date: '7/21/2025', member: 'Rucksack214', damage: 9261859 },
-      { date: '7/21/2025', member: 'JibJab', damage: 8750764 },
-      { date: '7/21/2025', member: 'Ramshackle', damage: 8689552 },
-      { date: '7/21/2025', member: 'TomTom', damage: 7693667 },
-      { date: '7/21/2025', member: 'Streetglide16', damage: 6993365 },
-      { date: '7/21/2025', member: 'Kelossal', damage: 4888782 },
-      { date: '7/21/2025', member: 'Snap:alprofessor', damage: 2787166 },
-      { date: '7/21/2025', member: 'TuPutaMadreOG', damage: 2488918 },
-      { date: '7/21/2025', member: 'Defender', damage: 388972 },
-      { date: '7/21/2025', member: 'Elaldi06', damage: 348119 },
+      { date: '8/5/2025', member: 'EggHo', damage: 102473782 },
+      { date: '8/5/2025', member: 'Lord Montblanc', damage: 79695556 },
+      { date: '8/5/2025', member: 'Xhx', damage: 70519154 },
+      { date: '8/5/2025', member: 'NoFear', damage: 64072572 },
+      { date: '8/5/2025', member: '古魂Soul', damage: 63123939 },
+      { date: '8/5/2025', member: 'Fes', damage: 61288178 },
+      { date: '8/5/2025', member: 'lord bacon', damage: 59250406 },
+      { date: '8/5/2025', member: 'Lord Opt2mst', damage: 53960318 },
+      { date: '8/5/2025', member: 'Brink!', damage: 53952998 },
+      { date: '8/5/2025', member: 'Basteeboi', damage: 47499056 },
+      { date: '8/5/2025', member: 'Yahya', damage: 45314606 },
+      { date: '8/5/2025', member: 'Dirty_Work', damage: 44180788 },
+      { date: '8/5/2025', member: 'Millie 23', damage: 42888755 },
+      { date: '8/5/2025', member: 'Skull60', damage: 41411864 },
+      { date: '8/5/2025', member: 'LiveLight', damage: 32520069 },
+      { date: '8/5/2025', member: 'SARICICEK', damage: 29791462 },
+      { date: '8/5/2025', member: 'Kylar Stern', damage: 28698310 },
+      { date: '8/5/2025', member: 'Pimpchicken', damage: 28455738 },
+      { date: '8/5/2025', member: 'Dark', damage: 27027018 },
+      { date: '8/5/2025', member: 'Junebug', damage: 26258461 },
+      { date: '8/5/2025', member: 'Wanye', damage: 24206330 },
+      { date: '8/5/2025', member: 'Lord Rocking', damage: 23773379 },
+      { date: '8/5/2025', member: 'TuPutaMadreOG', damage: 22924775 },
+      { date: '8/5/2025', member: 'LordFarQuat', damage: 20989857 },
+      { date: '8/5/2025', member: 'Quan', damage: 20940897 },
+      { date: '8/5/2025', member: 'kst1836', damage: 18783446 },
+      { date: '8/5/2025', member: 'KingZ', damage: 18244690 },
+      { date: '8/5/2025', member: 'Atomic Gummybear', damage: 17731095 },
+      { date: '8/5/2025', member: 'princess aireen', damage: 17415743 },
+      { date: '8/5/2025', member: 'Adjie23', damage: 14586820 },
+      { date: '8/5/2025', member: 'NoMana', damage: 13185512 },
+      { date: '8/5/2025', member: '冷面佛', damage: 10311575 },
+      { date: '8/5/2025', member: 'Zulu', damage: 5642282 },
+      { date: '8/5/2025', member: 'Music', damage: 4874879 },
+      { date: '8/5/2025', member: 'Aldean', damage: 4676600 },
+      { date: '8/5/2025', member: 'Defender', damage: 4463699 },
+      { date: '8/5/2025', member: 'Dmitch', damage: 3414246 },
+      { date: '8/5/2025', member: '乂阿志乂', damage: 2861815 },
+      { date: '8/5/2025', member: 'Kelossal', damage: 2182291 },
+      { date: '8/5/2025', member: 'Morjumba', damage: 1395727 },
    ];
 
     const indLabels = indData.map(item => item.date);    
@@ -380,6 +457,28 @@
         plugins: { zoom: { enabled: false } }
       }
     });
+
+    function showTab(tabId) {
+      // Hide all sections
+      document.querySelectorAll("section").forEach(section => {
+        section.classList.remove("active");
+      });
+
+      // Remove active class from all buttons
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+
+      // Show selected section
+      document.getElementById(tabId).classList.add("active");
+
+      // Highlight active tab
+      const clickedButton = Array.from(document.querySelectorAll(".tab-btn")).find(btn =>
+        btn.textContent.toLowerCase().includes(tabId)
+      );
+      if (clickedButton) clickedButton.classList.add("active");
+    }
   </script>
+
 </body>
 </html>
