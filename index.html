@@ -95,6 +95,10 @@
       width: 100% !important;
       height: auto !important;
     }
+
+    a {
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -107,6 +111,7 @@
 
   <nav>
     <button class="tab-btn active" onclick="showTab('home')">Home</button>
+    <button class="tab-btn" onclick="showTab('history')">History</button>
     <button class="tab-btn" onclick="showTab('about')">About Us</button>
     <button class="tab-btn" onclick="showTab('discord')">Discord</button>
     <button class="tab-btn" onclick="showTab('analytics')">Analytics</button>
@@ -120,8 +125,8 @@
       <p>If you're looking for casual play, keep scrolling. If you're looking to rise with the best — welcome to The Tempest Alliance.</p>
     </section>
 
-    <section id="about">
-      <h2>About Us</h2>
+    <section id="history">
+      <h2>History</h2>
       <p>The Tempest Alliance is more than just an elite gaming alliance — it is a force of nature. Forged in fire, tempered by war, and united under a single banner, we are warriors, tacticians, and champions of conquest. We battle for our homeland — the Stormpire — and carry its name into every arena with thunder at our backs.</p>
 
       <h2>Where It All Began</h2>
@@ -145,6 +150,42 @@
       <hr>
     </section>
 
+    <section id="about">
+      <h2>About Us</h2>
+      <h2>The Command Council – Our Leadership</h2>
+      <p>At the heart of The Tempest Alliance stands a council of leaders forged by fire, loyalty, and war. These are not just ranks — they are the soul of the Stormpire. Each commander brings a unique strength to the table, making our alliance unstoppable in both strategy and spirit.</p>
+      <hr>
+      <h3>Junebug – <i>The Storm Commander</i></h3>
+      <p>Strategist. Unifier. Relentless. As the current R5, Junebug leads with a perfect blend of discipline and instinct. A master of alliance coordination and large-scale warfare, he carries the legacy of Boondock forward with unwavering resolve. Junebug doesn’t just command the storm — he is the storm.</p>
+      <hr>
+      <h3>Boondock – <i>The Founder, The Flamebearer</i></h3>
+      <p>The original spark that lit the fire of the Tempest. Boondock is a philosopher, tactician, and legend. His vision gave birth to Empire, his wisdom guided the merger with Stormforged, and his spirit continues to shape every battle we fight.</p>
+
+      <h3>Defender – <i>The Shield of the Alliance</i></h3>
+      <p>Unshakably loyal and fiercely protective, Defender stands as a guardian of the Stormpire. He holds the line so others can strike, and when the walls are tested — he holds fast.</p>
+
+      <h3>Pimpchicken – <i>The Shadow and the Shield</i></h3>
+      <p>Smart, strong, and always in the right place at the right time, Pimpchicken is both a powerful warrior and a skilled spy. If there’s something we need to know — or someone who needs to fall — he's already on it.</p>
+
+      <h3>Dirty_Work – <i>The Blade of the Stormpire</i></h3>
+      <p>Ruthless. Fearless. Focused. Dirty_Work is a frontline warrior whose presence on the battlefield changes everything. When she strikes, she doesn’t hold back — and the enemy never forgets.</p>
+
+      <h3>LiveLight – <i>The Voice of the Storm</i></h3>
+      <p>Bright, insightful, and always on point, LiveLight keeps the Tempest informed and aligned. As our scribe and communicator, she’s the one who ensures no one misses a beat — or a battle.</p>
+ 
+      <h3>Opt2mst Prime – <i>The Architect of Order</i></h3>
+      <p>Organized, kind, and calm under pressure, Opt2mst Prime is a steady hand in turbulent times. His leadership brings structure and clarity, ensuring the alliance is always battle-ready and well-prepared for whatever comes next.</p>
+
+      <h3>Fes – <i>The Hatman</i></h3>
+      <p>Fes wears many hats. Literally. </p>
+
+      <br>
+      <hr>
+      <p>Together, this council forms the heart of The Tempest Alliance — where loyalty meets strategy, and where the storm finds its command.</p>
+      <hr>
+    </section>
+
+
     <section id="discord">
       <h2>Join Us on Discord</h2>
       <p>Our Discord server is the heart of our operations. Chat, strategize, and laugh with fellow members.</p>
@@ -158,27 +199,27 @@
 
         <!-- Top Row -->
         <div class="chart-row">
-        <div class="chart-container">
-            <canvas id="comboChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="dualDamageChart"></canvas>
-        </div>
+          <div class="chart-container">
+              <canvas id="comboChart"></canvas>
+          </div>
+          <div class="chart-container">
+              <canvas id="dualDamageChart"></canvas>
+          </div>
         </div>
 
         <!-- Bottom Row -->
         <div class="chart-row">
-        <div class="chart-container">
-            <canvas id="totalDamageChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="avgDamageChart"></canvas>
-        </div>
+          <div class="chart-container">
+              <canvas id="totalDamageChart"></canvas>
+          </div>
+          <div class="chart-container">
+              <canvas id="avgDamageChart"></canvas>
+          </div>
         </div>
 
         <!-- Bottom Horizontal Bar -->
         <div class="chart-container wide">
-        <canvas id="memberDamageChart"></canvas>
+          <canvas id="memberDamageChart"></canvas>
         </div>
       </div>
     </section>
