@@ -65,6 +65,34 @@
       color: #aaa;
     }
 
+        .leader-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .leader-card {
+      background-color: #222;
+      border-radius: 8px;
+      padding: 20px;
+      flex: 1 1 45%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      min-width: 300px;
+    }
+
+    .leader-title {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 5px;
+    }
+
+    .leader-role {
+      color: #aaa;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+
     /* Main content area 
     .main {
       flex: 1;
@@ -155,34 +183,51 @@
       <h2>The Command Council – Our Leadership</h2>
       <p>At the heart of The Tempest Alliance stands a council of leaders forged by fire, loyalty, and war. These are not just ranks — they are the soul of the Stormpire. Each commander brings a unique strength to the table, making our alliance unstoppable in both strategy and spirit.</p>
       <hr>
-      <h3>Junebug – <i>The Storm Commander</i></h3>
-      <p>Strategist. Unifier. Relentless. As the current R5, Junebug leads with a perfect blend of discipline and instinct. A master of alliance coordination and large-scale warfare, he carries the legacy of Boondock forward with unwavering resolve. Junebug doesn’t just command the storm — he is the storm.</p>
-      <hr>
-      <h3>Boondock – <i>The Founder, The Flamebearer</i></h3>
-      <p>The original spark that lit the fire of the Tempest. Boondock is a philosopher, tactician, and legend. His vision gave birth to Empire, his wisdom guided the merger with Stormforged, and his spirit continues to shape every battle we fight.</p>
-
-      <h3>Defender – <i>The Shield of the Alliance</i></h3>
-      <p>Unshakably loyal and fiercely protective, Defender stands as a guardian of the Stormpire. He holds the line so others can strike, and when the walls are tested — he holds fast.</p>
-
-      <h3>Pimpchicken – <i>The Shadow and the Shield</i></h3>
-      <p>Smart, strong, and always in the right place at the right time, Pimpchicken is both a powerful warrior and a skilled spy. If there’s something we need to know — or someone who needs to fall — he's already on it.</p>
-
-      <h3>Dirty_Work – <i>The Blade of the Stormpire</i></h3>
-      <p>Ruthless. Fearless. Focused. Dirty_Work is a frontline warrior whose presence on the battlefield changes everything. When she strikes, she doesn’t hold back — and the enemy never forgets.</p>
-
-      <h3>LiveLight – <i>The Voice of the Storm</i></h3>
-      <p>Bright, insightful, and always on point, LiveLight keeps the Tempest informed and aligned. As our scribe and communicator, she’s the one who ensures no one misses a beat — or a battle.</p>
- 
-      <h3>Opt2mst Prime – <i>The Architect of Order</i></h3>
-      <p>Organized, kind, and calm under pressure, Opt2mst Prime is a steady hand in turbulent times. His leadership brings structure and clarity, ensuring the alliance is always battle-ready and well-prepared for whatever comes next.</p>
-
-      <h3>Fes – <i>The Hatman</i></h3>
-      <p>Fes wears many hats. Literally. </p>
-
-      <br>
-      <hr>
-      <p>Together, this council forms the heart of The Tempest Alliance — where loyalty meets strategy, and where the storm finds its command.</p>
-      <hr>
+      <div class="leader-grid">
+            <div class="leader-card">
+              <div class="leader-title">Junebug</div>
+              <div class="leader-role">The Storm Commander (R5)</div>
+              <p>Strategist. Unifier. Relentless. As the current R5, Junebug leads with discipline and instinct. He carries Boondock’s legacy with force and precision. He doesn't just command the storm — he <em>is</em> the storm.</p>
+            </div>
+          </div>
+          <hr>
+          <div class="leader-grid">
+            <div class="leader-card">
+              <div class="leader-title">Boondock</div>
+              <div class="leader-role">The Founder, The Flamebearer</div>
+              <p>Boondock is the visionary who built the foundation of Tempest. Philosopher and tactician, his legacy continues in every move we make.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">Defender</div>
+              <div class="leader-role">The Shield of the Alliance</div>
+              <p>Loyal, brave, and dependable, Defender stands between danger and the Stormpire. A true protector of the realm.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">Pimpchicken</div>
+              <div class="leader-role">The Shadow and the Shield</div>
+              <p>Smart, strong, and always ready, Pimpchicken is both warrior and spy. Whether it’s intel or impact, he delivers exactly what the alliance needs — when it needs it.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">Dirty_Work</div>
+              <div class="leader-role">The Blade of the Stormpire</div>
+              <p>Ruthless in combat and fearless in approach, Dirty_Work leads by action. When the battle cries out, she answers first — and hits hard.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">Opt2mst Prime</div>
+              <div class="leader-role">The Architect of Order</div>
+              <p>Organized, kind, and calm under pressure, Prime is a steady hand in turbulent times. His leadership keeps the alliance focused and always ready for war.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">LiveLight</div>
+              <div class="leader-role">The Voice of the Storm</div>
+              <p>Our scribe and signal fire, LiveLight keeps the Tempest informed and aligned. She ensures no one is left in the dark — or the dust.</p>
+            </div>
+            <div class="leader-card">
+              <div class="leader-title">Fes</div>
+              <div class="leader-role">The Hatmaster</div>
+              <p>He wears hats. Many hats. All of them excellent.</p>
+            </div>
+          </div>
     </section>
 
 
