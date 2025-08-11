@@ -7,7 +7,7 @@
   
   <!-- Chart.js -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <style>
     body {
@@ -127,6 +127,26 @@
 
     a {
       color: white;
+    }
+
+    svg { max-width: 100%; height: auto; }
+    .node rect { stroke: #fff; }
+    .tooltip {
+      position: absolute;
+      text-align: left;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    #dateIndicator {
+      font-weight: bold;
+      margin-left: 10px;
     }
 
     @media only screen and (max-width: 620px) {
@@ -275,8 +295,12 @@
           <canvas id="memberDamageChart"></canvas>
         </div> -->
 
-        <!-- Treemap -->
-        <div id="chart_div" style="width: 600px; height: 1600px;"></div>
+        <h2>Damage Treemap - Running Total</h2>
+          <div id="controls">
+            <button id="resetBtn">Reset Animation</button>
+            <span id="dateIndicator"></span>
+          </div>
+          <div id="chart"></div>
       </div>
     </section>
   </main>
@@ -912,41 +936,74 @@
 
       ];
 
-      // Aggregate damage per member
-      const totals = {};
-      rawData.forEach(({ member, damage }) => {
-        totals[member] = (totals[member] || 0) + damage;
-      });
 
-      google.charts.load('current', {
-        packages: ['treemap']
-      });
+    const dates = [...new Set(rawData.map(d => d.date))].sort((a,b) => new Date(a) - new Date(b));
+    const members = [...new Set(rawData.map(d => d.member))];
 
-      google.charts.setOnLoadCallback(drawChart);
+    const width = 800;
+    const height = 800;
+    const color = d3.scaleOrdinal().domain(members).range(d3.schemeCategory10);
 
-      function drawChart() {
-        const data = new google.visualization.DataTable();
-        data.addColumn('string', 'ID');
-        data.addColumn('string', 'Parent');
-        data.addColumn('number', 'Damage');
+    const svg = d3.select("#chart").append("svg")
+      .attr("width", width)
+      .attr("height", height);
 
-        data.addRows([
-          ['All Members', null, 0], // Root node
-          ...Object.entries(totals).map(([member, damage]) => [member, 'All Members', damage])
-        ]);
+    const treemap = d3.treemap().size([width, height]).padding(1);
 
-        const tree = new google.visualization.TreeMap(document.getElementById('chart_div'));
+    let runningTotals, i, timer;
 
-        tree.draw(data, {
-          minColor: '#f9f9f9',
-          midColor: '#66ccff',
-          maxColor: '#0066cc',
-          headerHeight: 15,
-          height: 1500,
-          fontColor: 'black',
-          showScale: true
-        });
-      }
+    function update(dayIndex) {
+      const day = dates[dayIndex];
+      document.getElementById("dateIndicator").textContent = `Date: ${day}`;
+
+      rawData.filter(d => d.date === day).forEach(d => runningTotals[d.member] += d.damage);
+
+      const data = {
+        name: "root",
+        children: members.map(m => ({ name: m, value: runningTotals[m] }))
+      };
+
+      const root = d3.hierarchy(data).sum(d => d.value);
+      treemap(root);
+
+      const nodes = svg.selectAll("g").data(root.leaves(), d => d.data.name);
+
+      const enter = nodes.enter().append("g").attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+      enter.append("rect")
+        .attr("fill", d => color(d.data.name))
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0);
+
+      enter.append("text")
+        .attr("x", 4)
+        .attr("y", 14)
+        .text(d => `${d.data.name} (${d3.format(",")(d.value)})`);
+
+      nodes.transition().duration(800)
+        .attr("transform", d => `translate(${d.x0},${d.y0})`)
+        .select("rect")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0);
+
+      nodes.select("text")
+        .text(d => `${d.data.name} (${d3.format(",")(d.value)})`);
+    }
+
+    function startAnimation() {
+      svg.selectAll("g").remove();
+      runningTotals = Object.fromEntries(members.map(m => [m, 0]));
+      i = 0;
+      if (timer) timer.stop();
+      timer = d3.interval(() => {
+        update(i);
+        i++;
+        if (i >= dates.length) timer.stop();
+      }, 1500);
+    }
+
+    document.getElementById("resetBtn").addEventListener("click", startAnimation);
+    startAnimation();
 
     function showTab(tabId) {
       // Hide all sections
