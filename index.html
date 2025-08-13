@@ -325,6 +325,7 @@
       { date: '8/5/2025', rallies: 60, totalDamage: 1254988688, avgDamage: 20916478.1333333 },
       { date: '8/8/2025', rallies: 53, totalDamage: 1521002279, avgDamage: 28698156.2075472 },
       { date: '8/10/2025', rallies: 73, totalDamage: 1665192981, avgDamage: 22810862.7534247 },
+      { date: '8/12/2025', rallies: 73, totalDamage: 1706164408, avgDamage: 23372115.1780822 },
 
    ];
 
@@ -333,55 +334,6 @@
     const totalDamage = data.map(item => item.totalDamage);
     const avgDamage = data.map(item => item.avgDamage);
 
-
-  // const indData= [
-  //     { date: '8/5/2025', member: 'EggHo', damage: 102473782 },
-  //     { date: '8/5/2025', member: 'Lord Montblanc', damage: 79695556 },
-  //     { date: '8/5/2025', member: 'Xhx', damage: 70519154 },
-  //     { date: '8/5/2025', member: 'NoFear', damage: 64072572 },
-  //     { date: '8/5/2025', member: '古魂Soul', damage: 63123939 },
-  //     { date: '8/5/2025', member: 'Fes', damage: 61288178 },
-  //     { date: '8/5/2025', member: 'lord bacon', damage: 59250406 },
-  //     { date: '8/5/2025', member: 'Lord Opt2mst', damage: 53960318 },
-  //     { date: '8/5/2025', member: 'Brink!', damage: 53952998 },
-  //     { date: '8/5/2025', member: 'Basteeboi', damage: 47499056 },
-  //     { date: '8/5/2025', member: 'Yahya', damage: 45314606 },
-  //     { date: '8/5/2025', member: 'Dirty_Work', damage: 44180788 },
-  //     { date: '8/5/2025', member: 'Millie 23', damage: 42888755 },
-  //     { date: '8/5/2025', member: 'Skull60', damage: 41411864 },
-  //     { date: '8/5/2025', member: 'LiveLight', damage: 32520069 },
-  //     { date: '8/5/2025', member: 'SARICICEK', damage: 29791462 },
-  //     { date: '8/5/2025', member: 'Kylar Stern', damage: 28698310 },
-  //     { date: '8/5/2025', member: 'Pimpchicken', damage: 28455738 },
-  //     { date: '8/5/2025', member: 'Dark', damage: 27027018 },
-  //     { date: '8/5/2025', member: 'Junebug', damage: 26258461 },
-  //     { date: '8/5/2025', member: 'Wanye', damage: 24206330 },
-  //     { date: '8/5/2025', member: 'Lord Rocking', damage: 23773379 },
-  //     { date: '8/5/2025', member: 'TuPutaMadreOG', damage: 22924775 },
-  //     { date: '8/5/2025', member: 'LordFarQuat', damage: 20989857 },
-  //     { date: '8/5/2025', member: 'Quan', damage: 20940897 },
-  //     { date: '8/5/2025', member: 'kst1836', damage: 18783446 },
-  //     { date: '8/5/2025', member: 'KingZ', damage: 18244690 },
-  //     { date: '8/5/2025', member: 'Atomic Gummybear', damage: 17731095 },
-  //     { date: '8/5/2025', member: 'princess aireen', damage: 17415743 },
-  //     { date: '8/5/2025', member: 'Adjie23', damage: 14586820 },
-  //     { date: '8/5/2025', member: 'NoMana', damage: 13185512 },
-  //     { date: '8/5/2025', member: '冷面佛', damage: 10311575 },
-  //     { date: '8/5/2025', member: 'Zulu', damage: 5642282 },
-  //     { date: '8/5/2025', member: 'Music', damage: 4874879 },
-  //     { date: '8/5/2025', member: 'Aldean', damage: 4676600 },
-  //     { date: '8/5/2025', member: 'Defender', damage: 4463699 },
-  //     { date: '8/5/2025', member: 'Dmitch', damage: 3414246 },
-  //     { date: '8/5/2025', member: '乂阿志乂', damage: 2861815 },
-  //     { date: '8/5/2025', member: 'Kelossal', damage: 2182291 },
-  //     { date: '8/5/2025', member: 'Morjumba', damage: 1395727 },
-  //  ];
-
-  //   const indLabels = indData.map(item => item.date);    
-  //   const members = indData.map(item => item.member);
-  //   const memberDamage = indData.map(item => item.damage);
-
-  
     // Combo Chart
     new Chart(document.getElementById("comboChart"), {
       type: 'bar',
@@ -559,27 +511,6 @@
         }
       }
     });
-
-    
-    // // Member Horizontal Bar
-    // new Chart(document.getElementById("memberDamageChart"), {
-    //   type: "bar",
-    //   data: {
-    //     labels: members,
-    //     datasets: [{
-    //       label: "Damage",
-    //       data: memberDamage,
-    //       backgroundColor: "rgba(75, 192, 192, 0.6)"
-    //     }]
-    //   },
-    //   options: {
-    //     indexAxis: 'y',
-    //     scales: {
-    //       x: { beginAtZero: true }
-    //     },
-    //     plugins: { zoom: { enabled: false } }
-    //   }
-    // });
 
     // Raw data
     const rawData = [
@@ -933,6 +864,44 @@
       { date: '8/10/2025', member: 'UnSub 0483', damage: 5246246 },
       { date: '8/10/2025', member: 'LordFarQuat', damage: 4568123 },
       { date: '8/10/2025', member: '가시3', damage: 393213 },
+      { date: '8/12/2025', member: 'Lord Opt2mst', damage: 122499293 },
+      { date: '8/12/2025', member: 'EggHo', damage: 117417210 },
+      { date: '8/12/2025', member: 'Dirty_Work', damage: 109854986 },
+      { date: '8/12/2025', member: 'Lord Montblanc', damage: 98666519 },
+      { date: '8/12/2025', member: 'NoFear', damage: 93175455 },
+      { date: '8/12/2025', member: 'crosad', damage: 82670059 },
+      { date: '8/12/2025', member: 'Fes', damage: 80003324 },
+      { date: '8/12/2025', member: 'OddSoul', damage: 74039754 },
+      { date: '8/12/2025', member: '古魂Soul', damage: 68186026 },
+      { date: '8/12/2025', member: 'Dexter', damage: 53020033 },
+      { date: '8/12/2025', member: 'Realm', damage: 52902826 },
+      { date: '8/12/2025', member: 'Junebug', damage: 52890857 },
+      { date: '8/12/2025', member: 'Skull60', damage: 52772579 },
+      { date: '8/12/2025', member: 'Basteeboi', damage: 50600295 },
+      { date: '8/12/2025', member: 'Xhx', damage: 49882776 },
+      { date: '8/12/2025', member: 'Nightmare', damage: 46618750 },
+      { date: '8/12/2025', member: 'Prince Charming', damage: 46090416 },
+      { date: '8/12/2025', member: 'Lord Sassquatch', damage: 44788546 },
+      { date: '8/12/2025', member: 'Ramschackle', damage: 43273541 },
+      { date: '8/12/2025', member: 'SARICIEK', damage: 42517653 },
+      { date: '8/12/2025', member: 'Lord Rocking', damage: 41442910 },
+      { date: '8/12/2025', member: 'Lord Singh', damage: 40248865 },
+      { date: '8/12/2025', member: '乂阿志乂', damage: 35498334 },
+      { date: '8/12/2025', member: 'Kylar Stern', damage: 28392573 },
+      { date: '8/12/2025', member: 'NoMana', damage: 27917380 },
+      { date: '8/12/2025', member: 'Pimpchicken', damage: 25684095 },
+      { date: '8/12/2025', member: 'Snap:alprofessor', damage: 25357176 },
+      { date: '8/12/2025', member: 'JibJab', damage: 20076911 },
+      { date: '8/12/2025', member: 'TuPutaMadreOG', damage: 18535698 },
+      { date: '8/12/2025', member: 'Atomic Gummybear', damage: 14024250 },
+      { date: '8/12/2025', member: 'kst1836', damage: 9499260 },
+      { date: '8/12/2025', member: 'Newworldorder', damage: 9058907 },
+      { date: '8/12/2025', member: 'cam0', damage: 6884201 },
+      { date: '8/12/2025', member: 'lord bacon', damage: 6798027 },
+      { date: '8/12/2025', member: 'Aldean', damage: 6274274 },
+      { date: '8/12/2025', member: 'KingZ', damage: 5047343 },
+      { date: '8/12/2025', member: 'سعور', damage: 2058063 },
+      { date: '8/12/2025', member: 'Music', damage: 1992243 },
 
       ];
 
