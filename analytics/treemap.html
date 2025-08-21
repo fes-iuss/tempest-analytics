@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+  <title>Damage Treemap</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    svg { max-width: 100%; height: auto; }
+    .node rect { stroke: #fff; }
+    .tooltip {
+      position: absolute;
+      text-align: left;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+    #dateIndicator {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Damage Treemap - Running Total</h2>
+  <div id="controls">
+    <button id="resetBtn">Reset Animation</button>
+    <span id="dateIndicator"></span>
+  </div>
+  <div id="chart"></div>
+  <script>
+    const width = 800;
+    const height = 800;
+
+    const svg = d3.select("#chart").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const treemap = d3.treemap().size([width, height]).padding(1);
+
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    let dates, members, runningTotals, i, timer, rawData;
+
+    function update(dayIndex) {
+      const day = dates[dayIndex];
+      document.getElementById("dateIndicator").textContent = `Date: ${day}`;
+
+      rawData.filter(d => d.date === day).forEach(d => runningTotals[d.member] += d.damage);
+
+      const data = {
+        name: "root",
+        children: members.map(m => ({ name: m, value: runningTotals[m] }))
+      };
+
+      const root = d3.hierarchy(data).sum(d => d.value);
+      treemap(root);
+
+      const nodes = svg.selectAll("g").data(root.leaves(), d => d.data.name);
+
+      const enter = nodes.enter().append("g")
+        .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+      enter.append("rect")
+        .attr("fill", d => color(d.data.name))
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0)
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip.html(`<strong>${d.data.name}</strong><br/>Damage: ${d3.format(",")(d.value)}`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+
+      enter.append("text")
+        .attr("x", 4)
+        .attr("y", 14)
+        .append("tspan")
+        .text(d => d.data.name)
+        .attr("x", 4)
+        .attr("dy", 0);
+
+      enter.select("text")
+        .append("tspan")
+        .text(d => d3.format(",")(d.value))
+        .attr("x", 4)
+        .attr("dy", 14);
+
+      nodes.transition().duration(800)
+        .attr("transform", d => `translate(${d.x0},${d.y0})`)
+        .select("rect")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0);
+
+      nodes.select("text tspan:nth-child(1)").text(d => d.data.name);
+      nodes.select("text tspan:nth-child(2)").text(d => d3.format(",")(d.value));
+    }
+
+    function startAnimation() {
+      svg.selectAll("g").remove();
+      runningTotals = Object.fromEntries(members.map(m => [m, 0]));
+      i = 0;
+      if (timer) timer.stop();
+      timer = d3.interval(() => {
+        update(i);
+        i++;
+        if (i >= dates.length) timer.stop();
+      }, 1500);
+    }
+
+    d3.json("data.json").then(data => {
+      rawData = data;
+      dates = [...new Set(rawData.map(d => d.date))].sort((a,b) => new Date(a) - new Date(b));
+      members = [...new Set(rawData.map(d => d.member))];
+      color = d3.scaleOrdinal().domain(members).range(d3.schemeCategory10);
+
+      document.getElementById("resetBtn").addEventListener("click", startAnimation);
+      startAnimation();
+    });
+  </script>
+</body>
+</html>

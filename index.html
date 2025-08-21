@@ -307,7 +307,7 @@
 
   <script>
     const data = [
-            { date: '7/5/2025', rallies: 34, totalDamage: 84354866, avgDamage: 2481025.471 },
+      { date: '7/5/2025', rallies: 34, totalDamage: 84354866, avgDamage: 2481025.471 },
       { date: '7/7/2025', rallies: 59, totalDamage: 189134043, avgDamage: 3205661.746 },
       { date: '7/9/2025', rallies: 51, totalDamage: 177480213, avgDamage: 3480004.176 },
       { date: '7/11/2025', rallies: 41, totalDamage: 163228840, avgDamage: 3981191.22 },
@@ -516,57 +516,8 @@
       }
     });
 
-    // Raw data
-    const rawData = [
-      { date: '8/5/2025', member: 'EggHo', damage: 102473782 },
-      { date: '8/5/2025', member: 'Lord Montblanc', damage: 79695556 },
-      { date: '8/5/2025', member: 'Xhx', damage: 70519154 },
-      { date: '8/5/2025', member: 'NoFear', damage: 64072572 },
-      { date: '8/5/2025', member: '古魂Soul', damage: 63123939 },
-      { date: '8/5/2025', member: 'Fes', damage: 61288178 },
-      { date: '8/5/2025', member: 'lord bacon', damage: 59250406 },
-      { date: '8/5/2025', member: 'Lord Opt2mst', damage: 53960318 },
-      { date: '8/5/2025', member: 'Brink!', damage: 53952998 },
-      { date: '8/5/2025', member: 'Basteeboi', damage: 47499056 },
-      { date: '8/5/2025', member: 'Yahya', damage: 45314606 },
-      { date: '8/5/2025', member: 'Dirty_Work', damage: 44180788 },
-      { date: '8/5/2025', member: 'Millie 23', damage: 42888755 },
-      { date: '8/5/2025', member: 'Skull60', damage: 41411864 },
-      { date: '8/5/2025', member: 'LiveLight', damage: 32520069 },
-      { date: '8/5/2025', member: 'SARICICEK', damage: 29791462 },
-      { date: '8/5/2025', member: 'Kylar Stern', damage: 28698310 },
-      { date: '8/5/2025', member: 'Pimpchicken', damage: 28455738 },
-      { date: '8/5/2025', member: 'Dark', damage: 27027018 },
-      { date: '8/5/2025', member: 'Junebug', damage: 26258461 },
-      { date: '8/5/2025', member: 'Wanye', damage: 24206330 },
-      { date: '8/5/2025', member: 'Lord Rocking', damage: 23773379 },
-      { date: '8/5/2025', member: 'TuPutaMadreOG', damage: 22924775 },
-      { date: '8/5/2025', member: 'LordFarQuat', damage: 20989857 },
-      { date: '8/5/2025', member: 'Quan', damage: 20940897 },
-      { date: '8/5/2025', member: 'kst1836', damage: 18783446 },
-      { date: '8/5/2025', member: 'KingZ', damage: 18244690 },
-      { date: '8/5/2025', member: 'Atomic Gummybear', damage: 17731095 },
-      { date: '8/5/2025', member: 'princess aireen', damage: 17415743 },
-      { date: '8/5/2025', member: 'Adjie23', damage: 14586820 },
-      { date: '8/5/2025', member: 'NoMana', damage: 13185512 },
-      { date: '8/5/2025', member: '冷面佛', damage: 10311575 },
-      { date: '8/5/2025', member: 'Zulu', damage: 5642282 },
-      { date: '8/5/2025', member: 'Music', damage: 4874879 },
-      { date: '8/5/2025', member: 'Aldean', damage: 4676600 },
-      { date: '8/5/2025', member: 'Defender', damage: 4463699 },
-      { date: '8/5/2025', member: 'Dmitch', damage: 3414246 },
-      { date: '8/5/2025', member: '乂阿志乂', damage: 2861815 },
-      { date: '8/5/2025', member: 'Kelossal', damage: 2182291 },
-      { date: '8/5/2025', member: 'Morjumba', damage: 1395727 },
-    ];
-
-
-    const dates = [...new Set(rawData.map(d => d.date))].sort((a,b) => new Date(a) - new Date(b));
-    const members = [...new Set(rawData.map(d => d.member))];
-
     const width = 800;
     const height = 800;
-    const color = d3.scaleOrdinal().domain(members).range(d3.schemeCategory10);
 
     const svg = d3.select("#chart").append("svg")
       .attr("width", width)
@@ -574,7 +525,11 @@
 
     const treemap = d3.treemap().size([width, height]).padding(1);
 
-    let runningTotals, i, timer;
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    let dates, members, runningTotals, i, timer, rawData;
 
     function update(dayIndex) {
       const day = dates[dayIndex];
@@ -592,17 +547,34 @@
 
       const nodes = svg.selectAll("g").data(root.leaves(), d => d.data.name);
 
-      const enter = nodes.enter().append("g").attr("transform", d => `translate(${d.x0},${d.y0})`);
+      const enter = nodes.enter().append("g")
+        .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
       enter.append("rect")
         .attr("fill", d => color(d.data.name))
         .attr("width", d => d.x1 - d.x0)
-        .attr("height", d => d.y1 - d.y0);
+        .attr("height", d => d.y1 - d.y0)
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", 0.9);
+          tooltip.html(`<strong>${d.data.name}</strong><br/>Damage: ${d3.format(",")(d.value)}`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
 
       enter.append("text")
         .attr("x", 4)
         .attr("y", 14)
-        .text(d => `${d.data.name} (${d3.format(",")(d.value)})`);
+        .append("tspan")
+        .text(d => d.data.name)
+        .attr("x", 4)
+        .attr("dy", 0);
+
+      enter.select("text")
+        .append("tspan")
+        .text(d => d3.format(",")(d.value))
+        .attr("x", 4)
+        .attr("dy", 14);
 
       nodes.transition().duration(800)
         .attr("transform", d => `translate(${d.x0},${d.y0})`)
@@ -610,8 +582,8 @@
         .attr("width", d => d.x1 - d.x0)
         .attr("height", d => d.y1 - d.y0);
 
-      nodes.select("text")
-        .text(d => `${d.data.name} (${d3.format(",")(d.value)})`);
+      nodes.select("text tspan:nth-child(1)").text(d => d.data.name);
+      nodes.select("text tspan:nth-child(2)").text(d => d3.format(",")(d.value));
     }
 
     function startAnimation() {
@@ -626,8 +598,15 @@
       }, 1500);
     }
 
-    document.getElementById("resetBtn").addEventListener("click", startAnimation);
-    startAnimation();
+    d3.json("/assets/data.json").then(data => {
+      rawData = data;
+      dates = [...new Set(rawData.map(d => d.date))].sort((a,b) => new Date(a) - new Date(b));
+      members = [...new Set(rawData.map(d => d.member))];
+      color = d3.scaleOrdinal().domain(members).range(d3.schemeCategory10);
+
+      document.getElementById("resetBtn").addEventListener("click", startAnimation);
+      startAnimation();
+    });
 
     function showTab(tabId) {
       // Hide all sections

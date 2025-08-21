@@ -1,17 +1,4 @@
-{
-  "dailySummary": [
-    { "date": "7/5/2025", "rallies": 34, "totalDamage": 84354866, "avgDamage": 2481025.471 },
-    { "date": "7/7/2025", "rallies": 59, "totalDamage": 189134043, "avgDamage": 3205661.746 },
-    { "date": "7/9/2025", "rallies": 51, "totalDamage": 177480213, "avgDamage": 3480004.176 },
-    { "date": "7/11/2025", "rallies": 41, "totalDamage": 163228840, "avgDamage": 3981191.22 },
-    { "date": "7/13/2025", "rallies": 53, "totalDamage": 243204676, "avgDamage": 4588767.472 },
-    { "date": "7/15/2025", "rallies": 64, "totalDamage": 347881427, "avgDamage": 5435647.297 },
-    { "date": "7/17/2025", "rallies": 57, "totalDamage": 441002978, "avgDamage": 7736894.351 },
-    { "date": "7/19/2025", "rallies": 60, "totalDamage": 505465361, "avgDamage": 8424422.683 },
-    { "date": "7/21/2025", "rallies": 48, "totalDamage": 730164014, "avgDamage": 15211750.29 },
-    { "date": "7/23/2025", "rallies": 42, "totalDamage": 673438211, "avgDamage": 16034243.12 }
-  ],
-  "individualMembers": [
+[
     { "date": "7/21/2025", "member": "EggHo", "damage": 65430631 },
     { "date": "7/21/2025", "member": "NoFear", "damage": 49215239 },
     { "date": "7/21/2025", "member": "Fes", "damage": 40347802 },
@@ -28,5 +15,4 @@
     { "date": "7/21/2025", "member": "MackeBoi", "damage": 23369489 },
     { "date": "7/21/2025", "member": "Boondock", "damage": 23082113 },
     { "date": "7/21/2025", "member": "Dmitch", "damage": 21799324 }
-  ]
-}
+]
