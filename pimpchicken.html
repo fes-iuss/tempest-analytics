@@ -1,0 +1,779 @@
+<!--
+Pimpchicken is a stealth-action game featuring a suave ninja spy chicken! Here are the key features:
+
+🐔 Core Gameplay:
+
+Play as Agent Pimpchicken, a ninja spy chicken on secret missions
+Infiltrate compounds to collect intel diamonds while avoiding guards
+Use stealth mechanics to stay hidden in shadows
+🥷 Stealth System:
+
+Shadows: Hide in dark areas to boost stealth
+Sneak Mode: Move slowly but quietly (SHIFT)
+Dash Attack: Fast movement but very noisy (SPACE)
+Vision Cones: Guards have limited sight ranges and angles
+🎯 Mission Objectives:
+
+Collect all intel diamonds to complete each mission
+Avoid detection by guards (stealth meter management)
+Complete missions before time runs out
+Progress through increasingly difficult levels
+🎮 Game Features:
+
+Dynamic stealth meter that changes based on your actions
+Guard AI with patrol routes and alertness levels
+Particle effects for actions and collection
+Mission-based progression system
+Time pressure adds urgency
+🎨 Visual Style:
+
+Spy/ninja aesthetic with gold and black colors
+Top-down view perfect for stealth gameplay
+Guard vision cones show danger areas
+Atmospheric lighting with shadow mechanics
+The challenge comes from balancing speed vs. stealth - you need to collect all the intel quickly, but moving too fast or getting spotted will blow your cover! Agent Pimpchicken must use wit, timing, and ninja skills to complete each increasingly difficult mission.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pimpchicken - Ninja Spy Chicken</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            background: #0f0f23;
+            border: 3px solid #ffd700;
+            margin: 10px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #2d2d4a 100%);
+        }
+        
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 15px;
+            background: linear-gradient(90deg, #2d2d4a, #1a1a2e);
+            width: 794px;
+            box-sizing: border-box;
+            border-top: 3px solid #ffd700;
+        }
+        
+        .stat {
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .stealth-meter {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .stealth-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ffff44, #44ff44);
+            transition: width 0.3s ease;
+        }
+        
+        .title {
+            color: #ffd700;
+            text-shadow: 2px 2px 4px #000;
+            margin: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 10px;
+            color: #ccc;
+            font-size: 12px;
+            max-width: 800px;
+        }
+        
+        .mission-brief {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            padding: 20px;
+            margin: 10px;
+            max-width: 760px;
+            text-align: center;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border: 3px solid #ffd700;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(45deg, #ffed4e, #ffd700);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🐔 PIMPCHICKEN 🥷</h1>
+    
+    <div class="mission-brief">
+        <strong>CLASSIFIED MISSION:</strong> Agent Pimpchicken, infiltrate the enemy compound, collect intel diamonds, 
+        avoid guards, and escape! Use your ninja skills to stay in the shadows. 
+        <em>The fate of the coop depends on you!</em>
+    </div>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="hud">
+            <div class="stat">
+                <div>💎 Intel</div>
+                <div class="stat-value" id="diamonds">0</div>
+            </div>
+            <div class="stat">
+                <div>🏆 Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat">
+                <div>🕐 Time</div>
+                <div class="stat-value" id="timer">180</div>
+            </div>
+            <div class="stat">
+                <div>🎯 Mission</div>
+                <div class="stat-value" id="mission">1</div>
+            </div>
+            <div class="stat">
+                <div>👤 Stealth</div>
+                <div class="stealth-meter">
+                    <div class="stealth-fill" id="stealthMeter" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <strong>CONTROLS:</strong> WASD/Arrows: Move | SHIFT: Sneak Mode | SPACE: Dash Attack | 
+        Stay in shadows (dark areas) to remain hidden! Avoid guards' vision cones!
+    </div>
+    
+    <div class="game-over" id="gameOver">
+        <h2 id="gameOverTitle">MISSION COMPLETE!</h2>
+        <p id="gameOverText">Agent Pimpchicken has successfully completed the mission!</p>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <p>Intel Collected: <span id="finalDiamonds">0</span></p>
+        <button class="btn" onclick="restartGame()">New Mission</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = {
+            score: 0,
+            diamonds: 0,
+            mission: 1,
+            timer: 180,
+            gameRunning: true,
+            keys: {},
+            stealth: 100,
+            alertLevel: 0
+        };
+        
+        // Player (Pimpchicken)
+        let player = {
+            x: 50,
+            y: 50,
+            width: 16,
+            height: 16,
+            speed: 3,
+            sneakSpeed: 1.5,
+            dashSpeed: 8,
+            color: '#ffd700',
+            sneaking: false,
+            dashing: false,
+            dashCooldown: 0,
+            direction: 0,
+            inShadow: false
+        };
+        
+        // Game objects
+        let guards = [];
+        let diamonds = [];
+        let shadows = [];
+        let walls = [];
+        let particles = [];
+        let visionCones = [];
+        
+        // Initialize level
+        function initLevel() {
+            guards = [];
+            diamonds = [];
+            shadows = [];
+            walls = [];
+            visionCones = [];
+            
+            // Create walls (compound structure)
+            createWalls();
+            
+            // Create shadow areas
+            createShadows();
+            
+            // Spawn guards
+            spawnGuards();
+            
+            // Spawn diamonds (intel)
+            spawnDiamonds();
+            
+            // Reset player position
+            player.x = 50;
+            player.y = 50;
+            player.dashing = false;
+            player.dashCooldown = 0;
+        }
+        
+        function createWalls() {
+            // Outer walls
+            walls.push({x: 0, y: 0, width: canvas.width, height: 20});
+            walls.push({x: 0, y: 0, width: 20, height: canvas.height});
+            walls.push({x: canvas.width-20, y: 0, width: 20, height: canvas.height});
+            walls.push({x: 0, y: canvas.height-20, width: canvas.width, height: 20});
+            
+            // Interior walls (compound rooms)
+            walls.push({x: 200, y: 100, width: 20, height: 200});
+            walls.push({x: 400, y: 50, width: 20, height: 150});
+            walls.push({x: 600, y: 150, width: 20, height: 200});
+            walls.push({x: 100, y: 300, width: 300, height: 20});
+            walls.push({x: 500, y: 250, width: 200, height: 20});
+        }
+        
+        function createShadows() {
+            // Dark areas where chicken can hide
+            shadows.push({x: 30, y: 30, width: 100, height: 80});
+            shadows.push({x: 250, y: 120, width: 120, height: 100});
+            shadows.push({x: 450, y: 80, width: 100, height: 60});
+            shadows.push({x: 650, y: 200, width: 120, height: 150});
+            shadows.push({x: 120, y: 350, width: 150, height: 100});
+            shadows.push({x: 520, y: 300, width: 200, height: 80});
+        }
+        
+        function spawnGuards() {
+            const guardCount = 3 + gameState.mission;
+            for (let i = 0; i < guardCount; i++) {
+                guards.push({
+                    x: 150 + i * 150,
+                    y: 200 + (i % 2) * 100,
+                    width: 18,
+                    height: 18,
+                    speed: 1 + gameState.mission * 0.2,
+                    direction: Math.random() * Math.PI * 2,
+                    visionRange: 80,
+                    visionAngle: Math.PI / 3,
+                    alertness: 0,
+                    patrolPoints: [],
+                    currentTarget: 0,
+                    color: '#ff4444'
+                });
+            }
+            
+            // Set patrol routes
+            guards.forEach((guard, i) => {
+                guard.patrolPoints = [
+                    {x: guard.x, y: guard.y},
+                    {x: guard.x + 100 + i * 50, y: guard.y},
+                    {x: guard.x + 100 + i * 50, y: guard.y + 80},
+                    {x: guard.x, y: guard.y + 80}
+                ];
+            });
+        }
+        
+        function spawnDiamonds() {
+            const diamondCount = 5 + gameState.mission;
+            for (let i = 0; i < diamondCount; i++) {
+                let x, y;
+                do {
+                    x = Math.random() * (canvas.width - 100) + 50;
+                    y = Math.random() * (canvas.height - 100) + 50;
+                } while (isColliding({x, y, width: 10, height: 10}, walls));
+                
+                diamonds.push({
+                    x: x,
+                    y: y,
+                    width: 10,
+                    height: 10,
+                    collected: false,
+                    sparkle: 0
+                });
+            }
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            gameState.keys[e.code] = true;
+            e.preventDefault();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            gameState.keys[e.code] = false;
+            e.preventDefault();
+        });
+        
+        // Collision detection
+        function isColliding(rect1, rectArray) {
+            return rectArray.some(rect2 => 
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+        
+        function checkPointInRect(point, rect) {
+            return point.x >= rect.x && point.x <= rect.x + rect.width &&
+                   point.y >= rect.y && point.y <= rect.y + rect.height;
+        }
+        
+        // Create particles
+        function createParticles(x, y, color, count = 8) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 30,
+                    maxLife: 30,
+                    color: color,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+        
+        // Update player
+        function updatePlayer() {
+            if (!gameState.gameRunning) return;
+            
+            let newX = player.x;
+            let newY = player.y;
+            
+            // Handle sneaking
+            player.sneaking = gameState.keys['ShiftLeft'] || gameState.keys['ShiftRight'];
+            
+            // Handle dash attack
+            if (gameState.keys['Space'] && player.dashCooldown <= 0 && !player.dashing) {
+                player.dashing = true;
+                player.dashCooldown = 60; // 1 second cooldown
+                createParticles(player.x + player.width/2, player.y + player.height/2, '#ffd700', 5);
+            }
+            
+            if (player.dashCooldown > 0) {
+                player.dashCooldown--;
+            }
+            
+            if (player.dashing) {
+                player.dashCooldown = Math.max(player.dashCooldown, 45);
+                if (player.dashCooldown <= 45) {
+                    player.dashing = false;
+                }
+            }
+            
+            // Movement
+            let currentSpeed = player.sneaking ? player.sneakSpeed : 
+                              player.dashing ? player.dashSpeed : player.speed;
+            
+            if (gameState.keys['KeyA'] || gameState.keys['ArrowLeft']) {
+                newX -= currentSpeed;
+                player.direction = Math.PI;
+            }
+            if (gameState.keys['KeyD'] || gameState.keys['ArrowRight']) {
+                newX += currentSpeed;
+                player.direction = 0;
+            }
+            if (gameState.keys['KeyW'] || gameState.keys['ArrowUp']) {
+                newY -= currentSpeed;
+                player.direction = -Math.PI/2;
+            }
+            if (gameState.keys['KeyS'] || gameState.keys['ArrowDown']) {
+                newY += currentSpeed;
+                player.direction = Math.PI/2;
+            }
+            
+            // Check wall collisions
+            const newPlayerRect = {x: newX, y: newY, width: player.width, height: player.height};
+            if (!isColliding(newPlayerRect, walls)) {
+                player.x = newX;
+                player.y = newY;
+            }
+            
+            // Keep player in bounds
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            
+            // Check if in shadow
+            player.inShadow = shadows.some(shadow => 
+                checkPointInRect({x: player.x + player.width/2, y: player.y + player.height/2}, shadow)
+            );
+            
+            // Update stealth based on movement and shadows
+            if (player.inShadow && player.sneaking) {
+                gameState.stealth = Math.min(100, gameState.stealth + 2);
+            } else if (player.dashing) {
+                gameState.stealth = Math.max(0, gameState.stealth - 5);
+            } else if (!player.inShadow && !player.sneaking) {
+                gameState.stealth = Math.max(0, gameState.stealth - 1);
+            }
+            
+            // Collect diamonds
+            diamonds.forEach((diamond, index) => {
+                if (!diamond.collected && 
+                    Math.abs(player.x - diamond.x) < 20 && 
+                    Math.abs(player.y - diamond.y) < 20) {
+                    diamond.collected = true;
+                    gameState.diamonds++;
+                    gameState.score += 100;
+                    createParticles(diamond.x, diamond.y, '#00ffff', 6);
+                }
+            });
+        }
+        
+        // Update guards
+        function updateGuards() {
+            guards.forEach(guard => {
+                // Patrol movement
+                const target = guard.patrolPoints[guard.currentTarget];
+                const dx = target.x - guard.x;
+                const dy = target.y - guard.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 10) {
+                    guard.currentTarget = (guard.currentTarget + 1) % guard.patrolPoints.length;
+                } else {
+                    guard.x += (dx / distance) * guard.speed;
+                    guard.y += (dy / distance) * guard.speed;
+                    guard.direction = Math.atan2(dy, dx);
+                }
+                
+                // Vision detection
+                const playerCenterX = player.x + player.width / 2;
+                const playerCenterY = player.y + player.height / 2;
+                const guardCenterX = guard.x + guard.width / 2;
+                const guardCenterY = guard.y + guard.height / 2;
+                
+                const distToPlayer = Math.sqrt(
+                    Math.pow(playerCenterX - guardCenterX, 2) + 
+                    Math.pow(playerCenterY - guardCenterY, 2)
+                );
+                
+                if (distToPlayer < guard.visionRange) {
+                    const angleToPlayer = Math.atan2(playerCenterY - guardCenterY, playerCenterX - guardCenterX);
+                    const angleDiff = Math.abs(angleToPlayer - guard.direction);
+                    
+                    if (angleDiff < guard.visionAngle / 2 || angleDiff > Math.PI * 2 - guard.visionAngle / 2) {
+                        // Player in vision cone
+                        let stealthModifier = 1;
+                        if (player.inShadow) stealthModifier *= 0.3;
+                        if (player.sneaking) stealthModifier *= 0.5;
+                        if (player.dashing) stealthModifier *= 3;
+                        
+                        guard.alertness += 2 * stealthModifier;
+                        gameState.stealth = Math.max(0, gameState.stealth - 3 * stealthModifier);
+                        
+                        if (guard.alertness > 100) {
+                            // Player caught!
+                            gameState.stealth = 0;
+                            createParticles(player.x + player.width/2, player.y + player.height/2, '#ff0000', 10);
+                        }
+                    }
+                } else {
+                    guard.alertness = Math.max(0, guard.alertness - 1);
+                }
+            });
+        }
+        
+        // Update particles
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                particle.vx *= 0.98;
+                particle.vy *= 0.98;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+        
+        // Update game timer
+        function updateTimer() {
+            if (gameState.gameRunning && gameState.timer > 0) {
+                gameState.timer -= 1/60; // Decrease by 1 second per 60 frames
+                
+                if (gameState.timer <= 0) {
+                    endGame(false, "Time's up! Mission failed!");
+                }
+            }
+        }
+        
+        // Check mission completion
+        function checkMissionComplete() {
+            const collectedDiamonds = diamonds.filter(d => d.collected).length;
+            if (collectedDiamonds >= diamonds.length) {
+                gameState.mission++;
+                gameState.score += 1000 + Math.floor(gameState.timer) * 10;
+                gameState.timer = 180; // Reset timer for next mission
+                
+                if (gameState.mission > 5) {
+                    endGame(true, "All missions completed! You are the ultimate spy chicken!");
+                } else {
+                    initLevel(); // Next mission
+                }
+            }
+        }
+        
+        // Check game over conditions
+        function checkGameOver() {
+            if (gameState.stealth <= 0) {
+                endGame(false, "Cover blown! Agent Pimpchicken has been captured!");
+            }
+        }
+        
+        // Render everything
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw shadows
+            shadows.forEach(shadow => {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(shadow.x, shadow.y, shadow.width, shadow.height);
+            });
+            
+            // Draw walls
+            walls.forEach(wall => {
+                ctx.fillStyle = '#666666';
+                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+                ctx.strokeStyle = '#888888';
+                ctx.strokeRect(wall.x, wall.y, wall.width, wall.height);
+            });
+            
+            // Draw guard vision cones
+            guards.forEach(guard => {
+                if (guard.alertness > 0) {
+                    ctx.fillStyle = `rgba(255, 0, 0, ${Math.min(0.3, guard.alertness / 300)})`;
+                } else {
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.1)';
+                }
+                
+                ctx.beginPath();
+                ctx.moveTo(guard.x + guard.width/2, guard.y + guard.height/2);
+                ctx.arc(
+                    guard.x + guard.width/2, 
+                    guard.y + guard.height/2, 
+                    guard.visionRange,
+                    guard.direction - guard.visionAngle/2,
+                    guard.direction + guard.visionAngle/2
+                );
+                ctx.closePath();
+                ctx.fill();
+            });
+            
+            // Draw diamonds
+            diamonds.forEach(diamond => {
+                if (!diamond.collected) {
+                    diamond.sparkle += 0.2;
+                    const sparkleIntensity = Math.sin(diamond.sparkle) * 0.3 + 0.7;
+                    ctx.fillStyle = `rgba(0, 255, 255, ${sparkleIntensity})`;
+                    ctx.fillRect(diamond.x, diamond.y, diamond.width, diamond.height);
+                    
+                    // Diamond shape
+                    ctx.beginPath();
+                    ctx.moveTo(diamond.x + diamond.width/2, diamond.y);
+                    ctx.lineTo(diamond.x + diamond.width, diamond.y + diamond.height/2);
+                    ctx.lineTo(diamond.x + diamond.width/2, diamond.y + diamond.height);
+                    ctx.lineTo(diamond.x, diamond.y + diamond.height/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            });
+            
+            // Draw guards
+            guards.forEach(guard => {
+                // Guard body
+                ctx.fillStyle = guard.alertness > 50 ? '#ff6666' : guard.color;
+                ctx.fillRect(guard.x, guard.y, guard.width, guard.height);
+                
+                // Guard direction indicator
+                ctx.fillStyle = '#ffffff';
+                const dirX = guard.x + guard.width/2 + Math.cos(guard.direction) * 8;
+                const dirY = guard.y + guard.height/2 + Math.sin(guard.direction) * 8;
+                ctx.fillRect(dirX - 2, dirY - 2, 4, 4);
+                
+                // Alert indicator
+                if (guard.alertness > 0) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(guard.x + guard.width/2 - 3, guard.y - 8, 6, 4);
+                }
+            });
+            
+            // Draw player (Pimpchicken)
+            ctx.save();
+            ctx.translate(player.x + player.width/2, player.y + player.height/2);
+            
+            // Chicken body
+            if (player.dashing) {
+                ctx.fillStyle = '#ffff00';
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 10;
+            } else if (player.sneaking) {
+                ctx.fillStyle = player.inShadow ? '#ccaa00' : '#ffd700';
+            } else {
+                ctx.fillStyle = player.inShadow ? '#aa8800' : '#ffd700';
+            }
+            
+            ctx.fillRect(-player.width/2, -player.height/2, player.width, player.height);
+            
+            // Ninja mask
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-player.width/2 + 2, -player.height/2 + 2, player.width - 4, 6);
+            
+            // Eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-player.width/2 + 4, -player.height/2 + 3, 2, 2);
+            ctx.fillRect(-player.width/2 + player.width - 6, -player.height/2 + 3, 2, 2);
+            
+            // Beak
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(-2, -player.height/2 + 6, 4, 3);
+            
+            ctx.restore();
+            
+            // Draw particles
+            particles.forEach(particle => {
+                const alpha = particle.life / particle.maxLife;
+                ctx.fillStyle = particle.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+            });
+            
+            // Draw stealth indicator around player
+            if (gameState.stealth < 50) {
+                ctx.strokeStyle = gameState.stealth < 25 ? '#ff0000' : '#ffff00';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(player.x - 5, player.y - 5, player.width + 10, player.height + 10);
+            }
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('diamonds').textContent = gameState.diamonds;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('timer').textContent = Math.ceil(gameState.timer);
+            document.getElementById('mission').textContent = gameState.mission;
+            
+            const stealthPercent = (gameState.stealth / 100) * 100;
+            document.getElementById('stealthMeter').style.width = stealthPercent + '%';
+        }
+        
+        // End game
+        function endGame(success, message) {
+            gameState.gameRunning = false;
+            document.getElementById('gameOverTitle').textContent = success ? 'MISSION ACCOMPLISHED!' : 'MISSION FAILED!';
+            document.getElementById('gameOverText').textContent = message;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalDiamonds').textContent = gameState.diamonds;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        // Restart game
+        function restartGame() {
+            gameState = {
+                score: 0,
+                diamonds: 0,
+                mission: 1,
+                timer: 180,
+                gameRunning: true,
+                keys: {},
+                stealth: 100,
+                alertLevel: 0
+            };
+            
+            player.x = 50;
+            player.y = 50;
+            player.sneaking = false;
+            player.dashing = false;
+            player.dashCooldown = 0;
+            
+            particles = [];
+            
+            initLevel();
+            updateHUD();
+            
+            document.getElementById('gameOver').style.display = 'none';
+        }
+        
+        // Game loop
+        function gameLoop() {
+            updatePlayer();
+            updateGuards();
+            updateParticles();
+            updateTimer();
+            checkMissionComplete();
+            checkGameOver();
+            updateHUD();
+            render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize and start game
+        initLevel();
+        updateHUD();
+        gameLoop();
+    </script>
+</body>
+</html>

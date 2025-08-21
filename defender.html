@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defender - Knight's Quest</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            background: #111;
+            border: 2px solid #444;
+            margin: 10px;
+        }
+        
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #001122 0%, #003366 50%, #2d4a22 100%);
+        }
+        
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: #222;
+            width: 796px;
+            box-sizing: border-box;
+            border-top: 2px solid #444;
+        }
+        
+        .score, .lives, .wave {
+            font-size: 18px;
+            color: #0f0;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 10px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border: 2px solid #f00;
+            text-align: center;
+            display: none;
+        }
+        
+        .restart-btn {
+            background: #0a0;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .restart-btn:hover {
+            background: #0c0;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: #0f0; margin: 10px;">🛡️ DEFENDER - KNIGHT'S QUEST 🛡️</h1>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div class="hud">
+            <div class="score">Score: <span id="scoreValue">0</span></div>
+            <div class="lives">Lives: <span id="livesValue">3</span></div>
+            <div class="wave">Wave: <span id="waveValue">1</span></div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        WASD or Arrow Keys: Move | SPACE: Shoot | Defend the ladies from the dark knights!
+    </div>
+    
+    <div class="game-over" id="gameOver">
+        <h2 style="color: #f00;">GAME OVER</h2>
+        <p>The realm has fallen to darkness...</p>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button class="restart-btn" onclick="restartGame()">Defend Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = {
+            score: 0,
+            lives: 3,
+            wave: 1,
+            gameRunning: true,
+            keys: {},
+            worldOffset: 0,
+            worldWidth: 2400 // 3x canvas width for scrolling
+        };
+        
+        // Player (Knight)
+        let player = {
+            x: 100,
+            y: 200,
+            width: 20,
+            height: 20,
+            speed: 5,
+            color: '#00ff00'
+        };
+        
+        // Game objects arrays
+        let bullets = [];
+        let enemies = [];
+        let ladies = [];
+        let enemyBullets = [];
+        let particles = [];
+        
+        // Ladies (to be protected)
+        function createLadies() {
+            ladies = [];
+            for (let i = 0; i < 5; i++) {
+                ladies.push({
+                    x: 200 + i * 400,
+                    y: 350,
+                    width: 15,
+                    height: 25,
+                    captured: false,
+                    capturedBy: null,
+                    color: '#ff69b4'
+                });
+            }
+        }
+        
+        // Enemy (Dark Knights)
+        function spawnEnemies() {
+            const enemyCount = 3 + gameState.wave;
+            for (let i = 0; i < enemyCount; i++) {
+                enemies.push({
+                    x: Math.random() * gameState.worldWidth,
+                    y: Math.random() * 200 + 50,
+                    width: 18,
+                    height: 18,
+                    speed: 1 + gameState.wave * 0.2,
+                    direction: Math.random() > 0.5 ? 1 : -1,
+                    color: '#ff0000',
+                    type: 'lander',
+                    capturedLady: null,
+                    shootTimer: 0,
+                    ai: Math.random() > 0.7 ? 'aggressive' : 'normal'
+                });
+            }
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            gameState.keys[e.code] = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            gameState.keys[e.code] = false;
+        });
+        
+        // Bullet creation
+        function createBullet(x, y, direction, isPlayer = true) {
+            const bullet = {
+                x: x,
+                y: y,
+                width: 4,
+                height: 2,
+                speed: isPlayer ? 8 : 4,
+                direction: direction,
+                isPlayer: isPlayer,
+                color: isPlayer ? '#ffff00' : '#ff4444'
+            };
+            
+            if (isPlayer) {
+                bullets.push(bullet);
+            } else {
+                enemyBullets.push(bullet);
+            }
+        }
+        
+        // Particle effects
+        function createParticles(x, y, color, count = 5) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 30,
+                    maxLife: 30,
+                    color: color
+                });
+            }
+        }
+        
+        // Update player
+        function updatePlayer() {
+            // Movement
+            if (gameState.keys['KeyA'] || gameState.keys['ArrowLeft']) {
+                player.x -= player.speed;
+            }
+            if (gameState.keys['KeyD'] || gameState.keys['ArrowRight']) {
+                player.x += player.speed;
+            }
+            if (gameState.keys['KeyW'] || gameState.keys['ArrowUp']) {
+                player.y -= player.speed;
+            }
+            if (gameState.keys['KeyS'] || gameState.keys['ArrowDown']) {
+                player.y += player.speed;
+            }
+            
+            // Shooting
+            if (gameState.keys['Space']) {
+                if (!player.shooting) {
+                    createBullet(player.x + player.width, player.y + player.height/2, 1);
+                    player.shooting = true;
+                }
+            } else {
+                player.shooting = false;
+            }
+            
+            // Keep player on screen
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            
+            // Update world offset for scrolling effect
+            const centerX = canvas.width / 2;
+            if (player.x > centerX) {
+                const scroll = (player.x - centerX) * 0.1;
+                gameState.worldOffset += scroll;
+                player.x = centerX;
+            } else if (player.x < centerX - 100 && gameState.worldOffset > 0) {
+                const scroll = (centerX - 100 - player.x) * 0.1;
+                gameState.worldOffset = Math.max(0, gameState.worldOffset - scroll);
+                player.x = Math.min(centerX, player.x + scroll);
+            }
+            
+            gameState.worldOffset = Math.max(0, Math.min(gameState.worldWidth - canvas.width, gameState.worldOffset));
+        }
+        
+        // Update enemies
+        function updateEnemies() {
+            enemies.forEach((enemy, enemyIndex) => {
+                // Basic movement
+                enemy.x += enemy.direction * enemy.speed;
+                
+                // Bounce off world boundaries
+                if (enemy.x <= 0 || enemy.x >= gameState.worldWidth - enemy.width) {
+                    enemy.direction *= -1;
+                }
+                
+                // AI behavior
+                if (enemy.ai === 'aggressive') {
+                    // Target player
+                    const playerWorldX = player.x + gameState.worldOffset;
+                    if (enemy.x < playerWorldX) enemy.direction = 1;
+                    else if (enemy.x > playerWorldX) enemy.direction = -1;
+                }
+                
+                // Try to capture ladies
+                if (!enemy.capturedLady) {
+                    ladies.forEach((lady, ladyIndex) => {
+                        if (!lady.captured && 
+                            Math.abs(enemy.x - lady.x) < 30 && 
+                            Math.abs(enemy.y - lady.y) < 30) {
+                            lady.captured = true;
+                            lady.capturedBy = enemyIndex;
+                            enemy.capturedLady = ladyIndex;
+                            enemy.y -= 2; // Start lifting
+                        }
+                    });
+                } else {
+                    // Lift captured lady
+                    const lady = ladies[enemy.capturedLady];
+                    if (lady) {
+                        lady.x = enemy.x;
+                        lady.y = enemy.y + enemy.height;
+                        enemy.y -= 0.5; // Slowly lift up
+                        
+                        // If enemy reaches top, lady is lost
+                        if (enemy.y < -50) {
+                            gameState.lives--;
+                            updateHUD();
+                            
+                            // Remove lady and enemy
+                            ladies.splice(enemy.capturedLady, 1);
+                            enemies.splice(enemyIndex, 1);
+                            
+                            if (gameState.lives <= 0) {
+                                endGame();
+                            }
+                            return;
+                        }
+                    }
+                }
+                
+                // Enemy shooting
+                enemy.shootTimer++;
+                if (enemy.shootTimer > 60 + Math.random() * 120) {
+                    const playerWorldX = player.x + gameState.worldOffset;
+                    const distanceToPlayer = Math.abs(enemy.x - playerWorldX);
+                    
+                    if (distanceToPlayer < 200) {
+                        const direction = enemy.x < playerWorldX ? 1 : -1;
+                        createBullet(enemy.x, enemy.y + enemy.height/2, direction, false);
+                        enemy.shootTimer = 0;
+                    }
+                }
+            });
+        }
+        
+        // Update bullets
+        function updateBullets() {
+            // Player bullets
+            bullets.forEach((bullet, bulletIndex) => {
+                bullet.x += bullet.direction * bullet.speed;
+                
+                // Remove bullets that go off screen
+                if (bullet.x < -gameState.worldOffset || bullet.x > gameState.worldWidth) {
+                    bullets.splice(bulletIndex, 1);
+                    return;
+                }
+                
+                // Check collision with enemies
+                enemies.forEach((enemy, enemyIndex) => {
+                    if (bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+                        
+                        // Hit enemy
+                        createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#ff4444');
+                        
+                        // Free captured lady if any
+                        if (enemy.capturedLady !== null) {
+                            const lady = ladies[enemy.capturedLady];
+                            if (lady) {
+                                lady.captured = false;
+                                lady.capturedBy = null;
+                                lady.y = 350; // Return to ground
+                            }
+                        }
+                        
+                        gameState.score += 100;
+                        updateHUD();
+                        
+                        enemies.splice(enemyIndex, 1);
+                        bullets.splice(bulletIndex, 1);
+                    }
+                });
+            });
+            
+            // Enemy bullets
+            enemyBullets.forEach((bullet, bulletIndex) => {
+                bullet.x += bullet.direction * bullet.speed;
+                
+                // Remove bullets that go off screen
+                const screenX = bullet.x - gameState.worldOffset;
+                if (screenX < -50 || screenX > canvas.width + 50) {
+                    enemyBullets.splice(bulletIndex, 1);
+                    return;
+                }
+                
+                // Check collision with player
+                const playerWorldX = player.x + gameState.worldOffset;
+                if (bullet.x < playerWorldX + player.width &&
+                    bullet.x + bullet.width > playerWorldX &&
+                    bullet.y < player.y + player.height &&
+                    bullet.y + bullet.height > player.y) {
+                    
+                    // Hit player
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#00ff00');
+                    gameState.lives--;
+                    updateHUD();
+                    
+                    enemyBullets.splice(bulletIndex, 1);
+                    
+                    if (gameState.lives <= 0) {
+                        endGame();
+                    }
+                }
+            });
+        }
+        
+        // Update particles
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+        
+        // Check wave completion
+        function checkWaveComplete() {
+            if (enemies.length === 0) {
+                gameState.wave++;
+                gameState.score += 500;
+                updateHUD();
+                
+                // Spawn new wave
+                setTimeout(() => {
+                    spawnEnemies();
+                }, 2000);
+            }
+        }
+        
+        // Render everything
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground
+            ctx.fillStyle = '#4a4a4a';
+            ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+            
+            // Draw ladies
+            ladies.forEach(lady => {
+                const screenX = lady.x - gameState.worldOffset;
+                if (screenX > -50 && screenX < canvas.width + 50) {
+                    ctx.fillStyle = lady.captured ? '#ff9999' : lady.color;
+                    ctx.fillRect(screenX, lady.y, lady.width, lady.height);
+                    
+                    // Draw dress shape
+                    ctx.beginPath();
+                    ctx.arc(screenX + lady.width/2, lady.y + lady.height - 5, lady.width/2, 0, Math.PI);
+                    ctx.fill();
+                }
+            });
+            
+            // Draw enemies
+            enemies.forEach(enemy => {
+                const screenX = enemy.x - gameState.worldOffset;
+                if (screenX > -50 && screenX < canvas.width + 50) {
+                    ctx.fillStyle = enemy.color;
+                    ctx.fillRect(screenX, enemy.y, enemy.width, enemy.height);
+                    
+                    // Draw evil eyes
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(screenX + 3, enemy.y + 3, 3, 3);
+                    ctx.fillRect(screenX + enemy.width - 6, enemy.y + 3, 3, 3);
+                }
+            });
+            
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Draw knight details
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 5, player.y + 3, 3, 3); // Helmet visor
+            ctx.fillRect(player.x + 12, player.y + 3, 3, 3);
+            
+            // Draw bullets
+            bullets.forEach(bullet => {
+                const screenX = bullet.x - gameState.worldOffset;
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(screenX, bullet.y, bullet.width, bullet.height);
+            });
+            
+            enemyBullets.forEach(bullet => {
+                const screenX = bullet.x - gameState.worldOffset;
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(screenX, bullet.y, bullet.width, bullet.height);
+            });
+            
+            // Draw particles
+            particles.forEach(particle => {
+                const alpha = particle.life / particle.maxLife;
+                ctx.fillStyle = particle.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.fillRect(particle.x - gameState.worldOffset, particle.y, 2, 2);
+            });
+            
+            // Draw minimap
+            drawMinimap();
+        }
+        
+        // Draw minimap
+        function drawMinimap() {
+            const mapWidth = 200;
+            const mapHeight = 40;
+            const mapX = canvas.width - mapWidth - 10;
+            const mapY = 10;
+            
+            // Map background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+            ctx.strokeStyle = '#444';
+            ctx.strokeRect(mapX, mapY, mapWidth, mapHeight);
+            
+            // Scale factor
+            const scale = mapWidth / gameState.worldWidth;
+            
+            // Draw ladies on minimap
+            ladies.forEach(lady => {
+                ctx.fillStyle = lady.captured ? '#ff4444' : '#ff69b4';
+                ctx.fillRect(mapX + lady.x * scale, mapY + mapHeight - 5, 2, 3);
+            });
+            
+            // Draw enemies on minimap
+            enemies.forEach(enemy => {
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(mapX + enemy.x * scale, mapY + enemy.y * scale * 0.5, 2, 2);
+            });
+            
+            // Draw player on minimap
+            const playerMapX = mapX + (player.x + gameState.worldOffset) * scale;
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(playerMapX, mapY + player.y * scale * 0.5, 3, 3);
+            
+            // Draw view window
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeRect(mapX + gameState.worldOffset * scale, mapY, canvas.width * scale, mapHeight);
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('livesValue').textContent = gameState.lives;
+            document.getElementById('waveValue').textContent = gameState.wave;
+        }
+        
+        // End game
+        function endGame() {
+            gameState.gameRunning = false;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        // Restart game
+        function restartGame() {
+            gameState = {
+                score: 0,
+                lives: 3,
+                wave: 1,
+                gameRunning: true,
+                keys: {},
+                worldOffset: 0,
+                worldWidth: 2400
+            };
+            
+            player.x = 100;
+            player.y = 200;
+            
+            bullets = [];
+            enemies = [];
+            enemyBullets = [];
+            particles = [];
+            
+            createLadies();
+            spawnEnemies();
+            updateHUD();
+            
+            document.getElementById('gameOver').style.display = 'none';
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameState.gameRunning) {
+                updatePlayer();
+                updateEnemies();
+                updateBullets();
+                updateParticles();
+                checkWaveComplete();
+            }
+            
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize game
+        createLadies();
+        spawnEnemies();
+        updateHUD();
+        gameLoop();
+    </script>
+</body>
+</html>
