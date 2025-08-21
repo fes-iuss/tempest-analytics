@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Royal Cat Rider's Quest</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #2c5530, #1a3d1f);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid gold;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .title {
+            text-align: center;
+            color: #ffd700;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px #000;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #ccc;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .game-area {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+        
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #8B4513, #A0522D);
+            color: white;
+            border: 2px solid #ffd700;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: linear-gradient(45deg, #A0522D, #CD853F);
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-left: 4px solid #ffd700;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .cat-ascii {
+            font-family: monospace;
+            text-align: center;
+            color: #ffd700;
+            white-space: pre;
+            font-size: 0.8em;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="title">🏍️ Boondock's Quest 🐱</h1>
+        <p class="subtitle">A gentleman's adventure through England with feline companions</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <div>🍺 Beer Pints</div>
+                <div class="stat-value" id="beer">5</div>
+            </div>
+            <div class="stat">
+                <div>🐱 Cat Loyalty</div>
+                <div class="stat-value" id="catLoyalty">50</div>
+            </div>
+            <div class="stat">
+                <div>🥋 Jujitsu Skill</div>
+                <div class="stat-value" id="jujitsu">25</div>
+            </div>
+            <div class="stat">
+                <div>🏍️ Bike Condition</div>
+                <div class="stat-value" id="bikeCondition">100</div>
+            </div>
+            <div class="stat">
+                <div>👑 Honor</div>
+                <div class="stat-value" id="honor">10</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div id="gameText">
+                <div class="cat-ascii">    /\_/\  
+   ( o.o ) 
+  > ^ <</div>
+                <div class="message">
+                    Welcome to jolly old England! You are a motorcycle-riding gentleman with a loyal cat companion. 
+                    Your mission: Travel across England, master the ancient art of jujitsu, keep your feline friend happy, 
+                    and maintain your honor while enjoying the finest ales the realm has to offer!
+                    <br><br>
+                    Your cat, Sir Whiskers, sits proudly in your motorcycle's sidecar, ready for adventure!
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button onclick="visitPub()">🍺 Visit Local Pub</button>
+            <button onclick="trainJujitsu()">🥋 Train Jujitsu</button>
+            <button onclick="rideBike()">🏍️ Ride Motorcycle</button>
+            <button onclick="playCat()">🐱 Play with Cat</button>
+            <button onclick="randomEvent()">🎲 Explore England</button>
+            <button onclick="restoreStats()">🛠️ Rest & Repair</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <div>Quest Progress:</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="questProgress" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            beer: 5,
+            catLoyalty: 50,
+            jujitsu: 25,
+            bikeCondition: 100,
+            honor: 10,
+            questProgress: 0,
+            location: "London",
+            catName: "Sir Whiskers"
+        };
+
+        const locations = ["London", "Manchester", "Liverpool", "Birmingham", "Leeds", "Sheffield", "Bristol", "Newcastle", "Nottingham", "Leicester"];
+        
+        const events = [
+            {
+                text: "A ruffian challenges you to a fight outside a fish & chips shop!",
+                action: "jujitsu",
+                success: "You gracefully defeat the ruffian with a perfect throw! Sir Whiskers purrs approvingly.",
+                failure: "You stumble but maintain your dignity. The ruffian respects your effort."
+            },
+            {
+                text: "Your cat spots a mouse and gives chase, leading you into an adventure!",
+                action: "cat",
+                success: "Following Sir Whiskers leads you to a hidden treasure! What a clever cat!",
+                failure: "Sir Whiskers gets distracted by a butterfly instead. Still adorable though."
+            },
+            {
+                text: "Your motorcycle starts making strange noises while crossing the countryside!",
+                action: "bike",
+                success: "Your mechanical knowledge saves the day! The bike purrs like Sir Whiskers.",
+                failure: "You manage to fix it with some creative engineering and a bit of luck."
+            },
+            {
+                text: "A local pub is hosting a drinking contest with a grand prize!",
+                action: "beer",
+                success: "You win the contest with your refined palate! The crowd cheers!",
+                failure: "You drink responsibly and make friends instead. Sometimes that's better than winning."
+            }
+        ];
+
+        function updateDisplay() {
+            document.getElementById('beer').textContent = gameState.beer;
+            document.getElementById('catLoyalty').textContent = gameState.catLoyalty;
+            document.getElementById('jujitsu').textContent = gameState.jujitsu;
+            document.getElementById('bikeCondition').textContent = gameState.bikeCondition;
+            document.getElementById('honor').textContent = gameState.honor;
+            document.getElementById('questProgress').style.width = gameState.questProgress + '%';
+            
+            // Check win condition
+            if (gameState.questProgress >= 100) {
+                showMessage("🎉 Congratulations! You have become the legendary Royal Cat Rider of England! Sir Whiskers is proud of you, and your name will be remembered in pubs across the realm!");
+            }
+        }
+
+        function showMessage(text) {
+            document.getElementById('gameText').innerHTML = `
+                <div class="cat-ascii">    /\\_/\\  
+   ( ^.^ ) 
+    > ^ <</div>
+                <div class="message">${text}</div>
+            `;
+        }
+
+        function visitPub() {
+            if (gameState.beer <= 0) {
+                showMessage("You're out of beer money! Perhaps you should explore or work on your skills first.");
+                return;
+            }
+            
+            gameState.beer -= 1;
+            gameState.honor += Math.floor(Math.random() * 3) + 1;
+            gameState.questProgress += 5;
+            
+            const pubEvents = [
+                `You enjoy a fine pint at The ${locations[Math.floor(Math.random() * locations.length)]} Arms. The locals share tales of adventure!`,
+                "You meet a fellow motorcycle enthusiast who gives you tips about the roads ahead!",
+                "The pub cat becomes fast friends with Sir Whiskers. Cat networking at its finest!",
+                "You learn a new jujitsu technique from a mysterious stranger in the corner.",
+                "The bartender tells you about a secret route through the countryside."
+            ];
+            
+            if (Math.random() > 0.7) {
+                gameState.jujitsu += 2;
+                showMessage(pubEvents[3] + " Your jujitsu skill improves!");
+            } else {
+                showMessage(pubEvents[Math.floor(Math.random() * pubEvents.length)]);
+            }
+            
+            updateDisplay();
+        }
+
+        function trainJujitsu() {
+            if (gameState.bikeCondition < 20) {
+                showMessage("Your bike needs attention before you can travel to the dojo!");
+                return;
+            }
+            
+            gameState.jujitsu += Math.floor(Math.random() * 5) + 3;
+            gameState.bikeCondition -= 10;
+            gameState.questProgress += 8;
+            gameState.honor += 2;
+            
+            const trainingEvents = [
+                "You practice throws with a fellow student. Sir Whiskers watches intently, perhaps learning too!",
+                "The sensei teaches you the ancient technique of 'Purring Tiger' - inspired by your feline companion!",
+                "You master a new defensive stance. Your cat demonstrates perfect balance as usual.",
+                "Training in the English countryside, you feel at one with nature and your motorcycle."
+            ];
+            
+            showMessage(trainingEvents[Math.floor(Math.random() * trainingEvents.length)] + " Your jujitsu skill increases!");
+            updateDisplay();
+        }
+
+        function rideBike() {
+            if (gameState.bikeCondition < 30) {
+                showMessage("Your motorcycle needs repair before you can ride safely with Sir Whiskers!");
+                return;
+            }
+            
+            gameState.bikeCondition -= Math.floor(Math.random() * 15) + 5;
+            gameState.questProgress += 10;
+            gameState.catLoyalty += Math.floor(Math.random() * 3) + 1;
+            
+            const newLocation = locations[Math.floor(Math.random() * locations.length)];
+            gameState.location = newLocation;
+            
+            const rideEvents = [
+                `You and Sir Whiskers cruise through the beautiful English countryside to ${newLocation}. The wind in your hair, the purring in the sidecar!`,
+                `Racing through ${newLocation}, you discover a scenic route. Sir Whiskers seems to enjoy the adventure!`,
+                `Your motorcycle handles perfectly as you navigate the winding roads to ${newLocation}. Sir Whiskers is an excellent co-pilot!`,
+                `You stop for tea in ${newLocation}. Sir Whiskers charms the locals while you rest.`
+            ];
+            
+            showMessage(rideEvents[Math.floor(Math.random() * rideEvents.length)]);
+            updateDisplay();
+        }
+
+        function playCat() {
+            gameState.catLoyalty += Math.floor(Math.random() * 8) + 5;
+            gameState.honor += 1;
+            gameState.questProgress += 3;
+            
+            if (gameState.catLoyalty > 100) gameState.catLoyalty = 100;
+            
+            const catEvents = [
+                "Sir Whiskers purrs contentedly as you scratch behind his ears. A gentleman always cares for his companions!",
+                "You play with a feather toy. Sir Whiskers' acrobatic moves inspire your jujitsu training!",
+                "Sir Whiskers brings you a 'gift' - a small mouse. You politely thank him for his hunting prowess.",
+                "You and Sir Whiskers practice 'motorcycle sidecar poses' for photos. Tourism gold!",
+                "Sir Whiskers teaches you the art of napping in sunbeams. Sometimes rest is the best training."
+            ];
+            
+            if (Math.random() > 0.8) {
+                gameState.jujitsu += 1;
+                showMessage(catEvents[1] + " You even learn something about balance and agility!");
+            } else {
+                showMessage(catEvents[Math.floor(Math.random() * catEvents.length)]);
+            }
+            
+            updateDisplay();
+        }
+
+        function randomEvent() {
+            const event = events[Math.floor(Math.random() * events.length)];
+            let success = false;
+            
+            // Determine success based on relevant stat
+            switch(event.action) {
+                case "jujitsu":
+                    success = gameState.jujitsu > Math.random() * 50;
+                    break;
+                case "cat":
+                    success = gameState.catLoyalty > Math.random() * 80;
+                    break;
+                case "bike":
+                    success = gameState.bikeCondition > Math.random() * 100;
+                    break;
+                case "beer":
+                    success = gameState.beer > Math.random() * 8;
+                    break;
+            }
+            
+            if (success) {
+                gameState.honor += 3;
+                gameState.questProgress += 15;
+                if (event.action === "beer") gameState.beer += 2;
+                showMessage(event.text + "<br><br>✅ " + event.success);
+            } else {
+                gameState.honor += 1;
+                gameState.questProgress += 5;
+                showMessage(event.text + "<br><br>⚠️ " + event.failure);
+            }
+            
+            updateDisplay();
+        }
+
+        function restoreStats() {
+            if (gameState.beer < 2) {
+                showMessage("You need at least 2 pints worth of funds to rest properly!");
+                return;
+            }
+            
+            gameState.beer -= 2;
+            gameState.bikeCondition = Math.min(100, gameState.bikeCondition + 30);
+            gameState.catLoyalty = Math.min(100, gameState.catLoyalty + 10);
+            gameState.questProgress += 3;
+            
+            showMessage("You find a cozy inn where you, Sir Whiskers, and your motorcycle can rest and recover. The innkeeper serves excellent fish & chips, and Sir Whiskers gets premium cat treats!");
+            updateDisplay();
+        }
+
+        // Initialize the game
+        updateDisplay();
+    </script>
+</body>
+</html>

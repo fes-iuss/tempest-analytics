@@ -221,7 +221,7 @@
           <hr>
           <div class="leader-grid">
             <div class="leader-card">
-              <div class="leader-title">Boondock</div>
+              <div class="leader-title"><a href="boondock.html">Boondock</a></div>
               <div class="leader-role">The Founder, The Flamebearer</div>
               <p>Boondock is the visionary who built the foundation of Tempest. Philosopher and tactician, his legacy continues in every move we make.</p>
             </div>
@@ -598,7 +598,7 @@
       }, 1500);
     }
 
-    d3.json("/assets/data.json").then(data => {
+    d3.json("assets/data.json").then(data => {
       rawData = data;
       dates = [...new Set(rawData.map(d => d.date))].sort((a,b) => new Date(a) - new Date(b));
       members = [...new Set(rawData.map(d => d.member))];
