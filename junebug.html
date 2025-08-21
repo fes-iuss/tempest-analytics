@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Squash the Junebug!</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #f5f5dc;
+      margin: 0;
+      overflow: hidden;
+    }
+    #gameArea {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .bug {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 40px;
+      text-align: center;
+    }
+    .bug .body {
+      font-size: 40px;
+      line-height: 60px;
+    }
+    .bug .hat {
+      position: absolute;
+      top: -10px;   /* shift hat above bug */
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      pointer-events: none; /* clicks go through hat to bug */
+    }
+    #status {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Level 1: Kill the Junebug!</div>
+  <div id="gameArea"></div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const status = document.getElementById("status");
+
+    let level = 1;
+
+    const normalBug = "🐞"; 
+    const sillyHats = ["🎩", "🎓", "👑", "⛑️", "👒", "🪖"];
+
+    function startLevel() {
+      gameArea.innerHTML = "";
+      status.textContent = `Level ${level}: Kill the Junebug!`;
+
+      let bugCount = level + 2; 
+      let junebugIndex = Math.floor(Math.random() * bugCount);
+
+      for (let i = 0; i < bugCount; i++) {
+        let bug = document.createElement("div");
+        bug.className = "bug";
+        bug.style.left = Math.random() * (window.innerWidth - 60) + "px";
+        bug.style.top = Math.random() * (window.innerHeight - 60) + "px";
+
+        // Bug body
+        let body = document.createElement("div");
+        body.className = "body";
+        body.textContent = normalBug;
+        bug.appendChild(body);
+
+        if (i === junebugIndex) {
+          // Add silly hat overlay
+          let hat = document.createElement("div");
+          hat.className = "hat";
+          hat.textContent = sillyHats[Math.floor(Math.random() * sillyHats.length)];
+          bug.appendChild(hat);
+
+          bug.onclick = () => {
+            body.textContent = "💥"; // explosion
+            if (hat) hat.style.display = "none"; // hide hat
+            setTimeout(() => {
+              level++;
+              startLevel();
+            }, 600);
+          };
+        } else {
+          bug.onclick = () => {
+            body.textContent = "💥"; // explosion
+            setTimeout(() => {
+              level = 1;
+              startLevel();
+            }, 600);
+          };
+        }
+
+        gameArea.appendChild(bug);
+      }
+    }
+
+    startLevel();
+  </script>
+</body>
+</html>
