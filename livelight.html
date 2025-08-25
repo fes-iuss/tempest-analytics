@@ -1,0 +1,451 @@
+<!--
+This game features:
+
+Gameplay:
+
+Play as Ms. LiveLight, a caring teacher trying to keep her members together
+Use arrow keys or WASD to move around
+Collect all 10 members (blue circles) before time runs out
+Members move around randomly, making them challenging to catch
+Features:
+
+Beautiful gradient background and smooth animations
+Particle effects when collecting members
+Score system (100 points per member)
+60-second timer
+Win/lose conditions
+Pause functionality
+Responsive design
+Visual Elements:
+
+Ms. LiveLight is represented as an orange circle with a face
+Members are blue circles with smiling faces
+Collection radius indicator
+Grid background pattern
+Celebration particles
+The game is family-friendly and focuses on the positive theme of a dedicated teacher looking after her members during a battle. It's challenging but fair, requiring quick reflexes and strategic movement to collect all the members before time runs out!
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveLight - Keep Everyone Together!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        #gameContainer {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        #gameCanvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            background: #2c3e50;
+            display: block;
+            margin: 20px auto;
+        }
+
+        #gameInfo {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #instructions {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #c0392b;
+        }
+
+        .game-over {
+            background: rgba(231, 76, 60, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>🌟 LiveLight 🌟</h1>
+        <p>Help Ms. LiveLight keep all her energetic Alliance Members together during the Battle!</p>
+        
+        <div id="gameInfo">
+            <div>Score: <span id="score">0</span></div>
+            <div>Members Collected: <span id="collected">0</span>/10</div>
+            <div>Time: <span id="timer">60</span>s</div>
+        </div>
+
+        <canvas id="gameCanvas" width="760" height="500"></canvas>
+
+        <div id="instructions">
+            <h3>How to Play:</h3>
+            <p>🎯 Use ARROW KEYS or WASD to move Ms. LiveLight around</p>
+            <p>👥 Collect all the wandering crazy members (blue circles) before time runs out!</p>
+            <p>⚡ Fellow members move around randomly - catch them quickly!</p>
+            <p>🏆 Collect all 10 members to win!</p>
+        </div>
+
+        <button onclick="startGame()">Start New Game</button>
+        <button onclick="togglePause()">Pause/Resume</button>
+
+        <div id="gameOverScreen" style="display: none;" class="game-over">
+            <h2 id="gameOverTitle">Game Over!</h2>
+            <p id="gameOverMessage"></p>
+            <button onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            running: false,
+            paused: false,
+            score: 0,
+            timeLeft: 60,
+            membersCollected: 0,
+            totalMembers: 10
+        };
+
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 25,
+            speed: 4,
+            color: '#e67e22'
+        };
+
+        let members = [];
+        let particles = [];
+        let keys = {};
+        let gameTimer;
+        let animationId;
+
+        // Initialize members
+        function createMembers() {
+            members = [];
+            for (let i = 0; i < gameState.totalMembers; i++) {
+                members.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    size: 15,
+                    speed: 1 + Math.random() * 2,
+                    direction: Math.random() * Math.PI * 2,
+                    color: '#3498db',
+                    collected: false,
+                    wiggle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        // Create celebration particles
+        function createParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 30,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`
+                });
+            }
+        }
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Update player position
+        function updatePlayer() {
+            if (keys['arrowup'] || keys['w']) player.y -= player.speed;
+            if (keys['arrowdown'] || keys['s']) player.y += player.speed;
+            if (keys['arrowleft'] || keys['a']) player.x -= player.speed;
+            if (keys['arrowright'] || keys['d']) player.x += player.speed;
+
+            // Keep player in bounds
+            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+        }
+
+        // Update members
+        function updateMembers() {
+            members.forEach(member => {
+                if (members.collected) return;
+
+                // Random movement with wiggle
+                member.wiggle += 0.1;
+                member.direction += (Math.random() - 0.5) * 0.2;
+
+                member.x += Math.cos(member.direction) * member.speed;
+                member.y += Math.sin(member.direction) * member.speed;
+
+                // Bounce off walls
+                if (member.x <= member.size || member.x >= canvas.width - member.size) {
+                    member.direction = Math.PI - member.direction;
+                }
+                if (member.y <= member.size || member.y >= canvas.height - member.size) {
+                    member.direction = -member.direction;
+                }
+
+                // Keep in bounds
+                member.x = Math.max(member.size, Math.min(canvas.width - member.size, member.x));
+                member.y = Math.max(member.size, Math.min(canvas.height - member.size, member.y));
+
+                // Check collision with player
+                const dx = player.x - member.x;
+                const dy = player.y - member.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < player.size + member.size && !member.collected) {
+                    member.collected = true;
+                    gameState.membersCollected++;
+                    gameState.score += 100;
+                    createParticles(member.x, member.y);
+
+                    // Check win condition
+                    if (gameState.membersCollected >= gameState.totalMembers) {
+                        endGame(true);
+                    }
+                }
+            });
+        }
+
+        // Update particles
+        function updateParticles() {
+            particles = particles.filter(particle => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                particle.vx *= 0.98;
+                particle.vy *= 0.98;
+                return particle.life > 0;
+            });
+        }
+
+        // Draw everything
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid pattern
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+
+            // Draw members
+            members.forEach(member => {
+                if (member.collected) return;
+
+                ctx.fillStyle = member.color;
+                ctx.beginPath();
+                ctx.arc(member.x, member.y, member.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add a little face
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(member.x - 5, member.y - 5, 2, 0, Math.PI * 2);
+                ctx.arc(member.x + 5, member.y - 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(member.x, member.y + 2, 6, 0, Math.PI);
+                ctx.stroke();
+            });
+
+            // Draw player (Ms. LiveLight)
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add teacher details
+            ctx.fillStyle = '#f39c12';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y - 5, player.size - 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(player.x - 8, player.y - 8, 3, 0, Math.PI * 2);
+            ctx.arc(player.x + 8, player.y - 8, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupils
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(player.x - 8, player.y - 8, 1, 0, Math.PI * 2);
+            ctx.arc(player.x + 8, player.y - 8, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw particles
+            particles.forEach(particle => {
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life / 30;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+
+            // Draw collection radius hint
+            if (gameState.membersCollected < gameState.totalMembers) {
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size + 15, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.running || gameState.paused) return;
+
+            updatePlayer();
+            updateMembers();
+            updateParticles();
+            draw();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            gameState = {
+                running: true,
+                paused: false,
+                score: 0,
+                timeLeft: 60,
+                membersCollected: 0,
+                totalMembers: 10
+            };
+
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+
+            createMembers();
+            particles = [];
+            
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            updateUI();
+            
+            // Start timer
+            gameTimer = setInterval(() => {
+                if (!gameState.paused && gameState.running) {
+                    gameState.timeLeft--;
+                    if (gameState.timeLeft <= 0) {
+                        endGame(false);
+                    }
+                    updateUI();
+                }
+            }, 1000);
+
+            gameLoop();
+        }
+
+        // End game
+        function endGame(won) {
+            gameState.running = false;
+            clearInterval(gameTimer);
+            cancelAnimationFrame(animationId);
+
+            const gameOverScreen = document.getElementById('gameOverScreen');
+            const gameOverTitle = document.getElementById('gameOverTitle');
+            const gameOverMessage = document.getElementById('gameOverMessage');
+
+            if (won) {
+                gameOverTitle.textContent = '🎉 Congratulations! 🎉';
+                gameOverMessage.textContent = `Ms. LiveLight successfully kept all her fellow team members together! Final Score: ${gameState.score}`;
+                gameOverScreen.style.background = 'rgba(46, 204, 113, 0.9)';
+            } else {
+                gameOverTitle.textContent = '⏰ Time\'s Up! ⏰';
+                gameOverMessage.textContent = `Ms. LiveLight collected ${gameState.membersCollected} out of ${gameState.totalMembers} members. Final Score: ${gameState.score}`;
+                gameOverScreen.style.background = 'rgba(231, 76, 60, 0.9)';
+            }
+
+            gameOverScreen.style.display = 'block';
+        }
+
+        // Toggle pause
+        function togglePause() {
+            if (!gameState.running) return;
+            
+            gameState.paused = !gameState.paused;
+            if (!gameState.paused) {
+                gameLoop();
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('collected').textContent = gameState.membersCollected;
+            document.getElementById('timer').textContent = gameState.timeLeft;
+        }
+
+        // Initialize the game
+        draw();
+    </script>
+</body>
+</html>

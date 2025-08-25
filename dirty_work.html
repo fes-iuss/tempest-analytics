@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dirty Work - The Ultimate Cleanup Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #654321, #8B4513, #A0522D);
+            font-family: 'Courier New', monospace;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(240, 240, 240, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 3px solid #8B4513;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #8B4513;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        
+        #gameCanvas {
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            display: block;
+            margin: 20px auto;
+            background: #F5F5DC;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: linear-gradient(145deg, #8B4513, #A0522D);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: linear-gradient(145deg, #A0522D, #8B4513);
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .stat-box {
+            background: #DEB887;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #8B4513;
+        }
+        
+        .instructions {
+            background: #F0E68C;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 6px solid #DAA520;
+        }
+        
+        .work-log {
+            background: #E6E6FA;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 6px solid #8B4513;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #32CD32, #228B22);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧹 DIRTY WORK 🔧</h1>
+        <div class="subtitle">The Gritty Cleanup Challenge</div>
+        
+        <div class="instructions">
+            <h3>📋 Your Mission:</h3>
+            <p>You're the cleanup crew! Use your mouse to scrub away dirt, fix broken pipes, and clear debris. Different tools work better on different messes. Complete jobs to earn money and unlock better equipment!</p>
+            <p><strong>Controls:</strong> Click and drag to clean • Spacebar to switch tools • R to restart level</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">💰 Cash: $<span id="money">0</span></div>
+            <div class="stat-box">🏆 Jobs Done: <span id="jobsCompleted">0</span></div>
+            <div class="stat-box">🔧 Tool: <span id="currentTool">Scrub Brush</span></div>
+            <div class="stat-box">⏱️ Time: <span id="timeLeft">60</span>s</div>
+        </div>
+        
+        <div>
+            <strong>Job Progress:</strong>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="860" height="500"></canvas>
+        
+        <div class="controls">
+            <button onclick="startNewJob()">🆕 New Job</button>
+            <button onclick="togglePause()">⏸️ Pause</button>
+            <button onclick="buyTool()">🛒 Buy Tool ($50)</button>
+            <button onclick="showInstructions()">❓ Help</button>
+        </div>
+        
+        <div class="work-log">
+            <h4>📝 Work Log:</h4>
+            <div id="workLog">Ready to get your hands dirty! Click 'New Job' to start.</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameRunning = false;
+        let gamePaused = false;
+        let money = 0;
+        let jobsCompleted = 0;
+        let timeLeft = 60;
+        let currentToolIndex = 0;
+        let gameTimer = null;
+        
+        // Tools available
+        const tools = [
+            { name: 'Scrub Brush', power: 1, color: '#8B4513', size: 15 },
+            { name: 'Power Washer', power: 3, color: '#4169E1', size: 25 },
+            { name: 'Industrial Cleaner', power: 5, color: '#FF4500', size: 35 },
+            { name: 'Mega Scrubber', power: 8, color: '#FF1493', size: 45 }
+        ];
+        
+        let unlockedTools = 1; // Start with just the scrub brush
+        
+        // Dirt and mess objects
+        let dirtPatches = [];
+        let brokenPipes = [];
+        let debris = [];
+        let totalMess = 0;
+        let cleanedMess = 0;
+        
+        // Mouse tracking
+        let mouseX = 0;
+        let mouseY = 0;
+        let isMouseDown = false;
+        
+        // Particle effects
+        let particles = [];
+        
+        // Work log messages
+        const workMessages = [
+            "Found some nasty grime in the corner!",
+            "This pipe is completely busted!",
+            "Someone really made a mess here...",
+            "Time to roll up our sleeves!",
+            "This place hasn't been cleaned in years!",
+            "Found some mysterious stains...",
+            "Looks like a tough job ahead!",
+            "Better get the heavy-duty equipment!",
+            "This is what we call 'job security'!",
+            "Another day, another mess to clean!"
+        ];
+        
+        // Event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            updateMousePosition(e);
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            updateMousePosition(e);
+            if (isMouseDown && gameRunning && !gamePaused) {
+                cleanAtPosition(mouseX, mouseY);
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                switchTool();
+            } else if (e.code === 'KeyR') {
+                if (gameRunning) startNewJob();
+            }
+        });
+        
+        function updateMousePosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        }
+        
+        function startNewJob() {
+            gameRunning = true;
+            gamePaused = false;
+            timeLeft = 60 + (jobsCompleted * 10); // More time for harder jobs
+            dirtPatches = [];
+            brokenPipes = [];
+            debris = [];
+            particles = [];
+            cleanedMess = 0;
+            
+            generateMess();
+            addWorkLog(workMessages[Math.floor(Math.random() * workMessages.length)]);
+            
+            if (gameTimer) clearInterval(gameTimer);
+            gameTimer = setInterval(updateTimer, 1000);
+            
+            gameLoop();
+        }
+        
+        function generateMess() {
+            totalMess = 0;
+            
+            // Generate dirt patches
+            const numDirt = 15 + Math.floor(jobsCompleted * 2);
+            for (let i = 0; i < numDirt; i++) {
+                const dirt = {
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: Math.random() * (canvas.height - 60) + 30,
+                    size: 20 + Math.random() * 40,
+                    opacity: 0.3 + Math.random() * 0.7,
+                    type: 'dirt',
+                    health: 3 + Math.floor(Math.random() * 5)
+                };
+                dirtPatches.push(dirt);
+                totalMess += dirt.health;
+            }
+            
+            // Generate broken pipes
+            const numPipes = 3 + Math.floor(jobsCompleted * 0.5);
+            for (let i = 0; i < numPipes; i++) {
+                const pipe = {
+                    x: Math.random() * (canvas.width - 80) + 40,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    width: 60 + Math.random() * 40,
+                    height: 20,
+                    type: 'pipe',
+                    health: 8 + Math.floor(Math.random() * 7),
+                    leaking: true
+                };
+                brokenPipes.push(pipe);
+                totalMess += pipe.health;
+            }
+            
+            // Generate debris
+            const numDebris = 8 + Math.floor(jobsCompleted * 1.5);
+            for (let i = 0; i < numDebris; i++) {
+                const debrisItem = {
+                    x: Math.random() * (canvas.width - 30) + 15,
+                    y: Math.random() * (canvas.height - 30) + 15,
+                    size: 15 + Math.random() * 25,
+                    type: 'debris',
+                    health: 2 + Math.floor(Math.random() * 4),
+                    shape: Math.floor(Math.random() * 3) // Different debris shapes
+                };
+                debris.push(debrisItem);
+                totalMess += debrisItem.health;
+            }
+        }
+        
+        function cleanAtPosition(x, y) {
+            const currentTool = tools[currentToolIndex];
+            
+            // Clean dirt patches
+            dirtPatches.forEach((dirt, index) => {
+                const distance = Math.sqrt((x - dirt.x) ** 2 + (y - dirt.y) ** 2);
+                if (distance < dirt.size / 2 + currentTool.size / 2) {
+                    dirt.health -= currentTool.power;
+                    cleanedMess += currentTool.power;
+                    createCleaningParticles(x, y, currentTool.color);
+                    
+                    if (dirt.health <= 0) {
+                        dirtPatches.splice(index, 1);
+                        addWorkLog("Scrubbed away some nasty dirt!");
+                    }
+                }
+            });
+            
+            // Fix broken pipes
+            brokenPipes.forEach((pipe, index) => {
+                if (x > pipe.x && x < pipe.x + pipe.width &&
+                    y > pipe.y && y < pipe.y + pipe.height) {
+                    pipe.health -= currentTool.power;
+                    cleanedMess += currentTool.power;
+                    createCleaningParticles(x, y, '#4169E1');
+                    
+                    if (pipe.health <= 0) {
+                        brokenPipes.splice(index, 1);
+                        addWorkLog("Fixed a broken pipe!");
+                    }
+                }
+            });
+            
+            // Clear debris
+            debris.forEach((debrisItem, index) => {
+                const distance = Math.sqrt((x - debrisItem.x) ** 2 + (y - debrisItem.y) ** 2);
+                if (distance < debrisItem.size / 2 + currentTool.size / 2) {
+                    debrisItem.health -= currentTool.power;
+                    cleanedMess += currentTool.power;
+                    createCleaningParticles(x, y, '#8B4513');
+                    
+                    if (debrisItem.health <= 0) {
+                        debris.splice(index, 1);
+                        addWorkLog("Cleared some debris!");
+                    }
+                }
+            });
+        }
+        
+        function createCleaningParticles(x, y, color) {
+            for (let i = 0; i < 5; i++) {
+                particles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 20 + Math.random() * 20,
+                    maxLife: 40,
+                    color: color,
+                    size: 3 + Math.random() * 4
+                });
+            }
+        }
+        
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vx *= 0.98;
+                particle.vy *= 0.98;
+                particle.life--;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+        
+        function switchTool() {
+            if (currentToolIndex < unlockedTools - 1) {
+                currentToolIndex++;
+            } else {
+                currentToolIndex = 0;
+            }
+            updateUI();
+        }
+        
+        function buyTool() {
+            if (money >= 50 && unlockedTools < tools.length) {
+                money -= 50;
+                unlockedTools++;
+                addWorkLog(`Bought ${tools[unlockedTools - 1].name}! Press SPACE to switch tools.`);
+                updateUI();
+            } else if (unlockedTools >= tools.length) {
+                addWorkLog("You already have all the tools!");
+            } else {
+                addWorkLog("Not enough money! Need $50.");
+            }
+        }
+        
+        function togglePause() {
+            if (gameRunning) {
+                gamePaused = !gamePaused;
+                if (!gamePaused) {
+                    gameLoop();
+                }
+            }
+        }
+        
+        function updateTimer() {
+            if (!gamePaused && gameRunning) {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    endJob(false);
+                }
+            }
+        }
+        
+        function checkJobComplete() {
+            if (dirtPatches.length === 0 && brokenPipes.length === 0 && debris.length === 0) {
+                endJob(true);
+            }
+        }
+        
+        function endJob(completed) {
+            gameRunning = false;
+            if (gameTimer) clearInterval(gameTimer);
+            
+            if (completed) {
+                const bonus = Math.max(0, timeLeft * 2);
+                const payment = 100 + bonus + (jobsCompleted * 25);
+                money += payment;
+                jobsCompleted++;
+                addWorkLog(`Job completed! Earned $${payment} (including $${bonus} time bonus)`);
+            } else {
+                addWorkLog("Time's up! Job incomplete. No payment this time.");
+            }
+            
+            updateUI();
+        }
+        
+        function addWorkLog(message) {
+            const workLog = document.getElementById('workLog');
+            const timestamp = new Date().toLocaleTimeString();
+            workLog.innerHTML += `<br>[${timestamp}] ${message}`;
+            workLog.scrollTop = workLog.scrollHeight;
+        }
+        
+        function showInstructions() {
+            alert(`DIRTY WORK - Instructions:
+
+🎯 OBJECTIVE: Clean up all the mess before time runs out!
+
+🔧 TOOLS:
+• Scrub Brush: Basic cleaning tool
+• Power Washer: Faster cleaning, larger area
+• Industrial Cleaner: Heavy-duty cleaning power
+• Mega Scrubber: Ultimate cleaning machine
+
+💡 TIPS:
+• Different tools have different power and coverage
+• Bigger jobs pay more money
+• Time bonuses for quick completion
+• Buy better tools to handle tougher jobs
+• Press SPACE to switch between unlocked tools
+
+💰 ECONOMY:
+• Complete jobs to earn money
+• Better tools cost $50 each
+• Faster completion = bigger bonuses`);
+        }
+        
+        function draw() {
+            // Clear canvas with a dirty background
+            ctx.fillStyle = '#F5F5DC';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background texture
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.1)';
+            for (let i = 0; i < canvas.width; i += 20) {
+                for (let j = 0; j < canvas.height; j += 20) {
+                    if (Math.random() > 0.7) {
+                        ctx.fillRect(i, j, 2, 2);
+                    }
+                }
+            }
+            
+            // Draw dirt patches
+            dirtPatches.forEach(dirt => {
+                ctx.fillStyle = `rgba(101, 67, 33, ${dirt.opacity})`;
+                ctx.beginPath();
+                ctx.arc(dirt.x, dirt.y, dirt.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Health indicator
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillRect(dirt.x - 15, dirt.y - dirt.size/2 - 10, 30 * (dirt.health / 8), 4);
+            });
+            
+            // Draw broken pipes
+            brokenPipes.forEach(pipe => {
+                ctx.fillStyle = '#696969';
+                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+                
+                // Draw leaks
+                if (pipe.leaking) {
+                    ctx.fillStyle = 'rgba(0, 100, 255, 0.6)';
+                    for (let i = 0; i < 3; i++) {
+                        const leakX = pipe.x + (pipe.width / 4) * (i + 1);
+                        ctx.beginPath();
+                        ctx.arc(leakX, pipe.y + pipe.height, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                // Health indicator
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillRect(pipe.x, pipe.y - 8, pipe.width * (pipe.health / 15), 4);
+            });
+            
+            // Draw debris
+            debris.forEach(debrisItem => {
+                ctx.fillStyle = '#8B4513';
+                if (debrisItem.shape === 0) {
+                    ctx.fillRect(debrisItem.x - debrisItem.size/2, debrisItem.y - debrisItem.size/2, debrisItem.size, debrisItem.size);
+                } else if (debrisItem.shape === 1) {
+                    ctx.beginPath();
+                    ctx.arc(debrisItem.x, debrisItem.y, debrisItem.size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.moveTo(debrisItem.x, debrisItem.y - debrisItem.size/2);
+                    ctx.lineTo(debrisItem.x + debrisItem.size/2, debrisItem.y + debrisItem.size/2);
+                    ctx.lineTo(debrisItem.x - debrisItem.size/2, debrisItem.y + debrisItem.size/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Health indicator
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                ctx.fillRect(debrisItem.x - 10, debrisItem.y - debrisItem.size/2 - 8, 20 * (debrisItem.health / 6), 3);
+            });
+            
+            // Draw particles
+            particles.forEach(particle => {
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life / particle.maxLife;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+            
+            // Draw tool cursor
+            if (gameRunning && !gamePaused) {
+                const currentTool = tools[currentToolIndex];
+                ctx.strokeStyle = currentTool.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, currentTool.size / 2, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Tool center dot
+                ctx.fillStyle = currentTool.color;
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw pause overlay
+            if (gamePaused) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = '48px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', canvas.width/2, canvas.height/2);
+                ctx.textAlign = 'left';
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('money').textContent = money;
+            document.getElementById('jobsCompleted').textContent = jobsCompleted;
+            document.getElementById('currentTool').textContent = tools[currentToolIndex].name;
+            document.getElementById('timeLeft').textContent = timeLeft;
+            
+            // Update progress bar
+            const progress = totalMess > 0 ? Math.min(100, (cleanedMess / totalMess) * 100) : 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+        
+        function gameLoop() {
+            if (!gameRunning || gamePaused) return;
+            
+            updateParticles();
+            checkJobComplete();
+            
+            draw();
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize the game
+        draw();
+        updateUI();
+        addWorkLog("Welcome to Dirty Work! Ready to get your hands dirty?");
+    </script>
+</body>
+</html>
