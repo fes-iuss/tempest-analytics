@@ -34,9 +34,14 @@ The game captures the essence of the original Defender while adding the medieval
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Defender - Knight's Quest</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -47,74 +52,182 @@ The game captures the essence of the original Defender while adding the medieval
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            color: #0f0;
+            margin: 5px;
+            font-size: clamp(14px, 4vw, 24px);
+            text-align: center;
         }
         
         .game-container {
             background: #111;
             border: 2px solid #444;
-            margin: 10px;
+            margin: 5px;
+            width: 100%;
+            max-width: 100vw;
         }
         
         canvas {
             display: block;
             background: linear-gradient(180deg, #001122 0%, #003366 50%, #2d4a22 100%);
+            width: 100%;
+            height: auto;
+            max-width: 100vw;
         }
         
         .hud {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
+            padding: 8px 12px;
             background: #222;
-            width: 796px;
-            box-sizing: border-box;
+            width: 100%;
             border-top: 2px solid #444;
+            font-size: clamp(12px, 3vw, 16px);
         }
         
         .score, .lives, .wave {
-            font-size: 18px;
             color: #0f0;
         }
         
-        .controls {
-            text-align: center;
-            margin: 10px;
-            color: #888;
-            font-size: 14px;
+        .controls-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .dpad {
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px;
+            gap: 5px;
+        }
+        
+        .control-btn {
+            background: rgba(0, 255, 0, 0.3);
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .control-btn:active {
+            background: rgba(0, 255, 0, 0.6);
+        }
+        
+        .up-btn { grid-column: 2; grid-row: 1; }
+        .left-btn { grid-column: 1; grid-row: 2; }
+        .right-btn { grid-column: 3; grid-row: 2; }
+        .down-btn { grid-column: 2; grid-row: 3; }
+        
+        .shoot-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 0, 0.3);
+            border: 3px solid #ff0;
+            color: #ff0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .shoot-btn:active {
+            background: rgba(255, 255, 0, 0.6);
         }
         
         .game-over {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 30px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
             border: 2px solid #f00;
             text-align: center;
             display: none;
+            z-index: 200;
+            width: 90%;
+            max-width: 300px;
         }
         
         .restart-btn {
             background: #0a0;
             color: #fff;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
             margin-top: 15px;
+            border-radius: 5px;
+            touch-action: manipulation;
         }
         
-        .restart-btn:hover {
+        .restart-btn:active {
             background: #0c0;
+        }
+        
+        .instructions {
+            text-align: center;
+            margin: 5px;
+            color: #888;
+            font-size: clamp(10px, 2.5vw, 12px);
+            padding: 0 10px;
+        }
+        
+        .wave-message {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 0, 0.9);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 150;
+        }
+        
+        @media (max-width: 480px) {
+            .dpad {
+                grid-template-columns: 45px 45px 45px;
+                grid-template-rows: 45px 45px 45px;
+            }
+            
+            .shoot-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 14px;
+            }
+            
+            .controls-container {
+                padding: 8px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1 style="color: #0f0; margin: 10px;">🛡️ DEFENDER - KNIGHT'S QUEST 🛡️</h1>
+    <h1>🛡️ DEFENDER - KNIGHT'S QUEST 🛡️</h1>
     
     <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <canvas id="gameCanvas" width="400" height="300"></canvas>
         <div class="hud">
             <div class="score">Score: <span id="scoreValue">0</span></div>
             <div class="lives">Lives: <span id="livesValue">3</span></div>
@@ -122,8 +235,22 @@ The game captures the essence of the original Defender while adding the medieval
         </div>
     </div>
     
-    <div class="controls">
-        WASD or Arrow Keys: Move | SPACE: Shoot | Defend the ladies!
+    <div class="instructions">
+        Defend the ladies from dark knights! Use controls below to move and shoot.
+    </div>
+    
+    <div class="controls-container">
+        <div class="dpad">
+            <div class="control-btn up-btn" id="upBtn">↑</div>
+            <div class="control-btn left-btn" id="leftBtn">←</div>
+            <div class="control-btn right-btn" id="rightBtn">→</div>
+            <div class="control-btn down-btn" id="downBtn">↓</div>
+        </div>
+        <div class="control-btn shoot-btn" id="shootBtn">FIRE</div>
+    </div>
+    
+    <div class="wave-message" id="waveMessage">
+        Wave 2 - Get Ready!
     </div>
     
     <div class="game-over" id="gameOver">
@@ -137,6 +264,19 @@ The game captures the essence of the original Defender while adding the medieval
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Adjust canvas size for mobile
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const maxWidth = Math.min(window.innerWidth - 20, 800);
+            const maxHeight = Math.min(window.innerHeight * 0.5, 400);
+            
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = (maxWidth * 0.75) + 'px';
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
         // Game state
         let gameState = {
             score: 0,
@@ -145,17 +285,21 @@ The game captures the essence of the original Defender while adding the medieval
             gameRunning: true,
             keys: {},
             worldOffset: 0,
-            worldWidth: 2400 // 3x canvas width for scrolling
+            worldWidth: 1200,
+            waveTransition: false,
+            waveTransitionTimer: 0,
+            enemiesSpawned: false
         };
         
         // Player (Knight)
         let player = {
-            x: 100,
-            y: 200,
-            width: 20,
-            height: 20,
-            speed: 5,
-            color: '#00ff00'
+            x: 50,
+            y: 150,
+            width: 16,
+            height: 16,
+            speed: 4,
+            color: '#00ff00',
+            shootCooldown: 0
         };
         
         // Game objects arrays
@@ -165,15 +309,65 @@ The game captures the essence of the original Defender while adding the medieval
         let enemyBullets = [];
         let particles = [];
         
+        // Touch controls
+        const touchControls = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            shoot: false
+        };
+        
+        // Touch event handlers
+        function setupTouchControls() {
+            const buttons = {
+                upBtn: 'up',
+                downBtn: 'down',
+                leftBtn: 'left',
+                rightBtn: 'right',
+                shootBtn: 'shoot'
+            };
+            
+            Object.entries(buttons).forEach(([id, action]) => {
+                const btn = document.getElementById(id);
+                
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    touchControls[action] = true;
+                });
+                
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    touchControls[action] = false;
+                });
+                
+                btn.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    touchControls[action] = false;
+                });
+                
+                // Mouse events for desktop testing
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    touchControls[action] = true;
+                });
+                
+                btn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    touchControls[action] = false;
+                });
+            });
+        }
+        
         // Ladies (to be protected)
         function createLadies() {
             ladies = [];
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 4; i++) {
                 ladies.push({
-                    x: 200 + i * 400,
-                    y: 350,
-                    width: 15,
-                    height: 25,
+                    x: 100 + i * 250,
+                    y: 270,
+                    width: 12,
+                    height: 20,
                     captured: false,
                     capturedBy: null,
                     color: '#ff69b4'
@@ -181,27 +375,44 @@ The game captures the essence of the original Defender while adding the medieval
             }
         }
         
-        // Enemy (Dark Knights)
+        // Enemy (Dark Knights) - Fixed spawning logic
         function spawnEnemies() {
-            const enemyCount = 3 + gameState.wave;
+            if (gameState.enemiesSpawned) return; // Prevent multiple spawns
+            
+            gameState.enemiesSpawned = true;
+            const enemyCount = Math.min(2 + gameState.wave, 6); // Cap at 6 enemies max
+            
+            console.log(`Spawning ${enemyCount} enemies for wave ${gameState.wave}`);
+            
             for (let i = 0; i < enemyCount; i++) {
                 enemies.push({
                     x: Math.random() * gameState.worldWidth,
-                    y: Math.random() * 200 + 50,
-                    width: 18,
-                    height: 18,
-                    speed: 1 + gameState.wave * 0.2,
+                    y: Math.random() * 150 + 30,
+                    width: 14,
+                    height: 14,
+                    speed: 1 + gameState.wave * 0.1, // Slower speed increase
                     direction: Math.random() > 0.5 ? 1 : -1,
                     color: '#ff0000',
                     type: 'lander',
                     capturedLady: null,
-                    shootTimer: 0,
-                    ai: Math.random() > 0.7 ? 'aggressive' : 'normal'
+                    shootTimer: Math.random() * 60, // Random initial shoot timer
+                    ai: Math.random() > 0.8 ? 'aggressive' : 'normal'
                 });
             }
         }
         
-        // Input handling
+        // Show wave message
+        function showWaveMessage(waveNum) {
+            const messageEl = document.getElementById('waveMessage');
+            messageEl.textContent = `Wave ${waveNum} - Get Ready!`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Input handling (keyboard + touch)
         document.addEventListener('keydown', (e) => {
             gameState.keys[e.code] = true;
         });
@@ -210,14 +421,16 @@ The game captures the essence of the original Defender while adding the medieval
             gameState.keys[e.code] = false;
         });
         
-        // Bullet creation
+        // Bullet creation with cooldown
         function createBullet(x, y, direction, isPlayer = true) {
+            if (isPlayer && player.shootCooldown > 0) return;
+            
             const bullet = {
                 x: x,
                 y: y,
-                width: 4,
+                width: 3,
                 height: 2,
-                speed: isPlayer ? 8 : 4,
+                speed: isPlayer ? 6 : 3,
                 direction: direction,
                 isPlayer: isPlayer,
                 color: isPlayer ? '#ffff00' : '#ff4444'
@@ -225,21 +438,22 @@ The game captures the essence of the original Defender while adding the medieval
             
             if (isPlayer) {
                 bullets.push(bullet);
+                player.shootCooldown = 10; // 10 frame cooldown
             } else {
                 enemyBullets.push(bullet);
             }
         }
         
         // Particle effects
-        function createParticles(x, y, color, count = 5) {
+        function createParticles(x, y, color, count = 3) {
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: x,
                     y: y,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
-                    life: 30,
-                    maxLife: 30,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 20,
+                    maxLife: 20,
                     color: color
                 });
             }
@@ -247,28 +461,28 @@ The game captures the essence of the original Defender while adding the medieval
         
         // Update player
         function updatePlayer() {
-            // Movement
-            if (gameState.keys['KeyA'] || gameState.keys['ArrowLeft']) {
+            // Reduce shoot cooldown
+            if (player.shootCooldown > 0) {
+                player.shootCooldown--;
+            }
+            
+            // Movement (keyboard or touch)
+            if (gameState.keys['KeyA'] || gameState.keys['ArrowLeft'] || touchControls.left) {
                 player.x -= player.speed;
             }
-            if (gameState.keys['KeyD'] || gameState.keys['ArrowRight']) {
+            if (gameState.keys['KeyD'] || gameState.keys['ArrowRight'] || touchControls.right) {
                 player.x += player.speed;
             }
-            if (gameState.keys['KeyW'] || gameState.keys['ArrowUp']) {
+            if (gameState.keys['KeyW'] || gameState.keys['ArrowUp'] || touchControls.up) {
                 player.y -= player.speed;
             }
-            if (gameState.keys['KeyS'] || gameState.keys['ArrowDown']) {
+            if (gameState.keys['KeyS'] || gameState.keys['ArrowDown'] || touchControls.down) {
                 player.y += player.speed;
             }
             
-            // Shooting
-            if (gameState.keys['Space']) {
-                if (!player.shooting) {
-                    createBullet(player.x + player.width, player.y + player.height/2, 1);
-                    player.shooting = true;
-                }
-            } else {
-                player.shooting = false;
+            // Shooting with cooldown
+            if (gameState.keys['Space'] || touchControls.shoot) {
+                createBullet(player.x + player.width, player.y + player.height/2, 1);
             }
             
             // Keep player on screen
@@ -281,8 +495,8 @@ The game captures the essence of the original Defender while adding the medieval
                 const scroll = (player.x - centerX) * 0.1;
                 gameState.worldOffset += scroll;
                 player.x = centerX;
-            } else if (player.x < centerX - 100 && gameState.worldOffset > 0) {
-                const scroll = (centerX - 100 - player.x) * 0.1;
+            } else if (player.x < centerX - 50 && gameState.worldOffset > 0) {
+                const scroll = (centerX - 50 - player.x) * 0.1;
                 gameState.worldOffset = Math.max(0, gameState.worldOffset - scroll);
                 player.x = Math.min(centerX, player.x + scroll);
             }
@@ -292,7 +506,9 @@ The game captures the essence of the original Defender while adding the medieval
         
         // Update enemies
         function updateEnemies() {
-            enemies.forEach((enemy, enemyIndex) => {
+            for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+                const enemy = enemies[enemyIndex];
+                
                 // Basic movement
                 enemy.x += enemy.direction * enemy.speed;
                 
@@ -303,34 +519,37 @@ The game captures the essence of the original Defender while adding the medieval
                 
                 // AI behavior
                 if (enemy.ai === 'aggressive') {
-                    // Target player
-                    const playerWorldX = player.x + gameState.worldOffset;
-                    if (enemy.x < playerWorldX) enemy.direction = 1;
-                    else if (enemy.x > playerWorldX) enemy.direction = -1;
+                    // Target player occasionally
+                    if (Math.random() < 0.02) { // 2% chance per frame to change direction toward player
+                        const playerWorldX = player.x + gameState.worldOffset;
+                        if (enemy.x < playerWorldX) enemy.direction = 1;
+                        else if (enemy.x > playerWorldX) enemy.direction = -1;
+                    }
                 }
                 
                 // Try to capture ladies
-                if (!enemy.capturedLady) {
-                    ladies.forEach((lady, ladyIndex) => {
+                if (enemy.capturedLady === null) {
+                    for (let ladyIndex = 0; ladyIndex < ladies.length; ladyIndex++) {
+                        const lady = ladies[ladyIndex];
                         if (!lady.captured && 
-                            Math.abs(enemy.x - lady.x) < 30 && 
-                            Math.abs(enemy.y - lady.y) < 30) {
+                            Math.abs(enemy.x - lady.x) < 25 && 
+                            Math.abs(enemy.y - lady.y) < 25) {
                             lady.captured = true;
                             lady.capturedBy = enemyIndex;
                             enemy.capturedLady = ladyIndex;
-                            enemy.y -= 2; // Start lifting
+                            break; // Only capture one lady
                         }
-                    });
+                    }
                 } else {
                     // Lift captured lady
                     const lady = ladies[enemy.capturedLady];
-                    if (lady) {
+                    if (lady && lady.captured) {
                         lady.x = enemy.x;
                         lady.y = enemy.y + enemy.height;
-                        enemy.y -= 0.5; // Slowly lift up
+                        enemy.y -= 0.3; // Slower lifting
                         
                         // If enemy reaches top, lady is lost
-                        if (enemy.y < -50) {
+                        if (enemy.y < -30) {
                             gameState.lives--;
                             updateHUD();
                             
@@ -338,17 +557,24 @@ The game captures the essence of the original Defender while adding the medieval
                             ladies.splice(enemy.capturedLady, 1);
                             enemies.splice(enemyIndex, 1);
                             
+                            // Update other enemies' capturedLady indices
+                            enemies.forEach(e => {
+                                if (e.capturedLady !== null && e.capturedLady > enemy.capturedLady) {
+                                    e.capturedLady--;
+                                }
+                            });
+                            
                             if (gameState.lives <= 0) {
                                 endGame();
                             }
-                            return;
+                            continue;
                         }
                     }
                 }
                 
-                // Enemy shooting
+                // Enemy shooting with proper timing
                 enemy.shootTimer++;
-                if (enemy.shootTimer > 60 + Math.random() * 120) {
+                if (enemy.shootTimer > 120 + Math.random() * 180) { // 2-5 seconds between shots
                     const playerWorldX = player.x + gameState.worldOffset;
                     const distanceToPlayer = Math.abs(enemy.x - playerWorldX);
                     
@@ -358,23 +584,25 @@ The game captures the essence of the original Defender while adding the medieval
                         enemy.shootTimer = 0;
                     }
                 }
-            });
+            }
         }
         
         // Update bullets
         function updateBullets() {
             // Player bullets
-            bullets.forEach((bullet, bulletIndex) => {
+            for (let bulletIndex = bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+                const bullet = bullets[bulletIndex];
                 bullet.x += bullet.direction * bullet.speed;
                 
                 // Remove bullets that go off screen
                 if (bullet.x < -gameState.worldOffset || bullet.x > gameState.worldWidth) {
                     bullets.splice(bulletIndex, 1);
-                    return;
+                    continue;
                 }
                 
                 // Check collision with enemies
-                enemies.forEach((enemy, enemyIndex) => {
+                for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+                    const enemy = enemies[enemyIndex];
                     if (bullet.x < enemy.x + enemy.width &&
                         bullet.x + bullet.width > enemy.x &&
                         bullet.y < enemy.y + enemy.height &&
@@ -389,7 +617,7 @@ The game captures the essence of the original Defender while adding the medieval
                             if (lady) {
                                 lady.captured = false;
                                 lady.capturedBy = null;
-                                lady.y = 350; // Return to ground
+                                lady.y = 270;
                             }
                         }
                         
@@ -398,19 +626,21 @@ The game captures the essence of the original Defender while adding the medieval
                         
                         enemies.splice(enemyIndex, 1);
                         bullets.splice(bulletIndex, 1);
+                        break;
                     }
-                });
-            });
+                }
+            }
             
             // Enemy bullets
-            enemyBullets.forEach((bullet, bulletIndex) => {
+            for (let bulletIndex = enemyBullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+                const bullet = enemyBullets[bulletIndex];
                 bullet.x += bullet.direction * bullet.speed;
                 
                 // Remove bullets that go off screen
                 const screenX = bullet.x - gameState.worldOffset;
-                if (screenX < -50 || screenX > canvas.width + 50) {
+                if (screenX < -30 || screenX > canvas.width + 30) {
                     enemyBullets.splice(bulletIndex, 1);
-                    return;
+                    continue;
                 }
                 
                 // Check collision with player
@@ -431,12 +661,13 @@ The game captures the essence of the original Defender while adding the medieval
                         endGame();
                     }
                 }
-            });
+            }
         }
         
         // Update particles
         function updateParticles() {
-            particles.forEach((particle, index) => {
+            for (let index = particles.length - 1; index >= 0; index--) {
+                const particle = particles[index];
                 particle.x += particle.vx;
                 particle.y += particle.vy;
                 particle.life--;
@@ -444,20 +675,34 @@ The game captures the essence of the original Defender while adding the medieval
                 if (particle.life <= 0) {
                     particles.splice(index, 1);
                 }
-            });
+            }
         }
         
-        // Check wave completion
+        // Check wave completion - FIXED
         function checkWaveComplete() {
-            if (enemies.length === 0) {
+            if (enemies.length === 0 && !gameState.waveTransition && gameState.enemiesSpawned) {
+                console.log(`Wave ${gameState.wave} completed!`);
+                
+                gameState.waveTransition = true;
+                gameState.waveTransitionTimer = 120; // 2 seconds at 60fps
                 gameState.wave++;
-                gameState.score += 500;
+                gameState.score += 300;
+                gameState.enemiesSpawned = false; // Reset spawn flag
                 updateHUD();
                 
-                // Spawn new wave
-                setTimeout(() => {
-                    spawnEnemies();
-                }, 2000);
+                showWaveMessage(gameState.wave);
+            }
+        }
+        
+        // Handle wave transitions
+        function updateWaveTransition() {
+            if (gameState.waveTransition) {
+                gameState.waveTransitionTimer--;
+                
+                if (gameState.waveTransitionTimer <= 0) {
+                    gameState.waveTransition = false;
+                    spawnEnemies(); // Spawn new wave
+                }
             }
         }
         
@@ -468,18 +713,18 @@ The game captures the essence of the original Defender while adding the medieval
             
             // Draw ground
             ctx.fillStyle = '#4a4a4a';
-            ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+            ctx.fillRect(0, canvas.height - 15, canvas.width, 15);
             
             // Draw ladies
             ladies.forEach(lady => {
                 const screenX = lady.x - gameState.worldOffset;
-                if (screenX > -50 && screenX < canvas.width + 50) {
+                if (screenX > -30 && screenX < canvas.width + 30) {
                     ctx.fillStyle = lady.captured ? '#ff9999' : lady.color;
                     ctx.fillRect(screenX, lady.y, lady.width, lady.height);
                     
                     // Draw dress shape
                     ctx.beginPath();
-                    ctx.arc(screenX + lady.width/2, lady.y + lady.height - 5, lady.width/2, 0, Math.PI);
+                    ctx.arc(screenX + lady.width/2, lady.y + lady.height - 3, lady.width/2, 0, Math.PI);
                     ctx.fill();
                 }
             });
@@ -487,14 +732,14 @@ The game captures the essence of the original Defender while adding the medieval
             // Draw enemies
             enemies.forEach(enemy => {
                 const screenX = enemy.x - gameState.worldOffset;
-                if (screenX > -50 && screenX < canvas.width + 50) {
+                if (screenX > -30 && screenX < canvas.width + 30) {
                     ctx.fillStyle = enemy.color;
                     ctx.fillRect(screenX, enemy.y, enemy.width, enemy.height);
                     
                     // Draw evil eyes
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(screenX + 3, enemy.y + 3, 3, 3);
-                    ctx.fillRect(screenX + enemy.width - 6, enemy.y + 3, 3, 3);
+                    ctx.fillRect(screenX + 2, enemy.y + 2, 2, 2);
+                    ctx.fillRect(screenX + enemy.width - 4, enemy.y + 2, 2, 2);
                 }
             });
             
@@ -504,8 +749,8 @@ The game captures the essence of the original Defender while adding the medieval
             
             // Draw knight details
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(player.x + 5, player.y + 3, 3, 3); // Helmet visor
-            ctx.fillRect(player.x + 12, player.y + 3, 3, 3);
+            ctx.fillRect(player.x + 3, player.y + 2, 2, 2);
+            ctx.fillRect(player.x + 9, player.y + 2, 2, 2);
             
             // Draw bullets
             bullets.forEach(bullet => {
@@ -529,14 +774,23 @@ The game captures the essence of the original Defender while adding the medieval
             
             // Draw minimap
             drawMinimap();
+            
+            // Draw wave transition message
+            if (gameState.waveTransition) {
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                ctx.font = '20px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Preparing Wave ${gameState.wave}...`, canvas.width/2, canvas.height/2);
+                ctx.textAlign = 'left';
+            }
         }
         
         // Draw minimap
         function drawMinimap() {
-            const mapWidth = 200;
-            const mapHeight = 40;
-            const mapX = canvas.width - mapWidth - 10;
-            const mapY = 10;
+            const mapWidth = Math.min(150, canvas.width * 0.4);
+            const mapHeight = 25;
+            const mapX = canvas.width - mapWidth - 5;
+            const mapY = 5;
             
             // Map background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -550,19 +804,19 @@ The game captures the essence of the original Defender while adding the medieval
             // Draw ladies on minimap
             ladies.forEach(lady => {
                 ctx.fillStyle = lady.captured ? '#ff4444' : '#ff69b4';
-                ctx.fillRect(mapX + lady.x * scale, mapY + mapHeight - 5, 2, 3);
+                ctx.fillRect(mapX + lady.x * scale, mapY + mapHeight - 4, 2, 3);
             });
             
             // Draw enemies on minimap
             enemies.forEach(enemy => {
                 ctx.fillStyle = '#ff0000';
-                ctx.fillRect(mapX + enemy.x * scale, mapY + enemy.y * scale * 0.5, 2, 2);
+                ctx.fillRect(mapX + enemy.x * scale, mapY + enemy.y * scale * 0.4, 2, 2);
             });
             
             // Draw player on minimap
             const playerMapX = mapX + (player.x + gameState.worldOffset) * scale;
             ctx.fillStyle = '#00ff00';
-            ctx.fillRect(playerMapX, mapY + player.y * scale * 0.5, 3, 3);
+            ctx.fillRect(playerMapX, mapY + player.y * scale * 0.4, 2, 2);
             
             // Draw view window
             ctx.strokeStyle = '#ffffff';
@@ -592,11 +846,15 @@ The game captures the essence of the original Defender while adding the medieval
                 gameRunning: true,
                 keys: {},
                 worldOffset: 0,
-                worldWidth: 2400
+                worldWidth: 1200,
+                waveTransition: false,
+                waveTransitionTimer: 0,
+                enemiesSpawned: false
             };
             
-            player.x = 100;
-            player.y = 200;
+            player.x = 50;
+            player.y = 150;
+            player.shootCooldown = 0;
             
             bullets = [];
             enemies = [];
@@ -617,6 +875,7 @@ The game captures the essence of the original Defender while adding the medieval
                 updateEnemies();
                 updateBullets();
                 updateParticles();
+                updateWaveTransition();
                 checkWaveComplete();
             }
             
@@ -625,10 +884,236 @@ The game captures the essence of the original Defender while adding the medieval
         }
         
         // Initialize game
+        setupTouchControls();
         createLadies();
         spawnEnemies();
         updateHUD();
         gameLoop();
+        
+        // Prevent scrolling on mobile
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        // Handle visibility change (pause when tab is not active)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Reset all controls when tab becomes hidden
+                Object.keys(touchControls).forEach(key => {
+                    touchControls[key] = false;
+                });
+                Object.keys(gameState.keys).forEach(key => {
+                    gameState.keys[key] = false;
+                });
+            }
+        });
+        
+        // Handle window blur (reset controls)
+        window.addEventListener('blur', function() {
+            Object.keys(touchControls).forEach(key => {
+                touchControls[key] = false;
+            });
+            Object.keys(gameState.keys).forEach(key => {
+                gameState.keys[key] = false;
+            });
+        });
+        
+        // Additional mobile optimizations
+        function optimizeForMobile() {
+            // Disable zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+            
+            // Prevent pull-to-refresh
+            document.body.addEventListener('touchstart', e => {
+                if (e.touches.length !== 1) { return; }
+                const y = e.touches[0].clientY;
+                if (y <= 10) { e.preventDefault(); }
+            }, { passive: false });
+            
+            document.body.addEventListener('touchmove', e => {
+                if (e.touches.length !== 1) { return; }
+                const y = e.touches[0].clientY;
+                if (y <= 10) { e.preventDefault(); }
+            }, { passive: false });
+        }
+        
+        // Enhanced enemy AI for better gameplay
+        function enhancedEnemyAI(enemy, enemyIndex) {
+            // More sophisticated movement patterns
+            if (enemy.aiTimer === undefined) {
+                enemy.aiTimer = 0;
+                enemy.aiState = 'patrol';
+                enemy.targetX = enemy.x;
+            }
+            
+            enemy.aiTimer++;
+            
+            switch (enemy.aiState) {
+                case 'patrol':
+                    // Normal patrolling behavior
+                    if (enemy.aiTimer > 180) { // Change direction every 3 seconds
+                        enemy.direction *= -1;
+                        enemy.aiTimer = 0;
+                    }
+                    
+                    // Check if player is nearby
+                    const playerWorldX = player.x + gameState.worldOffset;
+                    const distanceToPlayer = Math.abs(enemy.x - playerWorldX);
+                    
+                    if (distanceToPlayer < 150 && Math.random() < 0.01) {
+                        enemy.aiState = 'hunt';
+                        enemy.aiTimer = 0;
+                    }
+                    break;
+                    
+                case 'hunt':
+                    // Actively pursue player
+                    const playerWorldX2 = player.x + gameState.worldOffset;
+                    if (enemy.x < playerWorldX2) {
+                        enemy.direction = 1;
+                    } else {
+                        enemy.direction = -1;
+                    }
+                    
+                    // Return to patrol after 5 seconds
+                    if (enemy.aiTimer > 300) {
+                        enemy.aiState = 'patrol';
+                        enemy.aiTimer = 0;
+                    }
+                    break;
+            }
+        }
+        
+        // Improved collision detection
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        // Power-up system (bonus feature)
+        let powerUps = [];
+        
+        function createPowerUp(x, y, type) {
+            powerUps.push({
+                x: x,
+                y: y,
+                width: 12,
+                height: 12,
+                type: type, // 'speed', 'multishot', 'shield'
+                timer: 600, // 10 seconds
+                color: type === 'speed' ? '#00ffff' : type === 'multishot' ? '#ffff00' : '#ff00ff'
+            });
+        }
+        
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+                powerUp.timer--;
+                
+                // Remove expired power-ups
+                if (powerUp.timer <= 0) {
+                    powerUps.splice(i, 1);
+                    continue;
+                }
+                
+                // Check collision with player
+                const playerWorldX = player.x + gameState.worldOffset;
+                if (checkCollision(
+                    { x: playerWorldX, y: player.y, width: player.width, height: player.height },
+                    powerUp
+                )) {
+                    // Apply power-up effect
+                    applyPowerUp(powerUp.type);
+                    powerUps.splice(i, 1);
+                    gameState.score += 50;
+                    updateHUD();
+                }
+            }
+        }
+        
+        function applyPowerUp(type) {
+            switch (type) {
+                case 'speed':
+                    player.speed = Math.min(player.speed + 1, 8);
+                    break;
+                case 'multishot':
+                    player.multishot = true;
+                    setTimeout(() => { player.multishot = false; }, 10000);
+                    break;
+                case 'shield':
+                    player.shield = true;
+                    setTimeout(() => { player.shield = false; }, 15000);
+                    break;
+            }
+        }
+        
+        function renderPowerUps() {
+            powerUps.forEach(powerUp => {
+                const screenX = powerUp.x - gameState.worldOffset;
+                if (screenX > -30 && screenX < canvas.width + 30) {
+                    // Pulsing effect
+                    const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                    ctx.globalAlpha = pulse;
+                    ctx.fillStyle = powerUp.color;
+                    ctx.fillRect(screenX, powerUp.y, powerUp.width, powerUp.height);
+                    ctx.globalAlpha = 1;
+                    
+                    // Draw power-up symbol
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '8px Courier New';
+                    ctx.textAlign = 'center';
+                    const symbol = powerUp.type === 'speed' ? 'S' : 
+                                  powerUp.type === 'multishot' ? 'M' : 'H';
+                    ctx.fillText(symbol, screenX + powerUp.width/2, powerUp.y + powerUp.height - 2);
+                    ctx.textAlign = 'left';
+                }
+            });
+        }
+        
+        // Enhanced bullet creation with multishot
+        function createBulletEnhanced(x, y, direction, isPlayer = true) {
+            if (isPlayer && player.shootCooldown > 0) return;
+            
+            if (isPlayer && player.multishot) {
+                // Create 3 bullets
+                createBullet(x, y - 3, direction, true);
+                createBullet(x, y, direction, true);
+                createBullet(x, y + 3, direction, true);
+            } else {
+                createBullet(x, y, direction, isPlayer);
+            }
+        }
+        
+        // Random power-up spawning
+        function maybeSpawnPowerUp() {
+            if (Math.random() < 0.001 && powerUps.length < 2) { // Very rare spawn
+                const types = ['speed', 'multishot', 'shield'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const x = Math.random() * gameState.worldWidth;
+                const y = Math.random() * 200 + 50;
+                createPowerUp(x, y, type);
+            }
+        }
+        
+        // Initialize mobile optimizations
+        optimizeForMobile();
+        
+        console.log("Game initialized successfully!");
+        
     </script>
 </body>
 </html>
