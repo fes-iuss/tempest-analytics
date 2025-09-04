@@ -47,6 +47,9 @@
             margin: 20px auto;
             background: #F5F5DC;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+            width: 100%;
+            height: auto;
+            touch-action: none;
         }
         
         .controls {
@@ -126,6 +129,15 @@
             width: 0%;
             transition: width 0.3s ease;
         }
+        
+        /* Mobile tweaks */
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            h1 { font-size: 1.8em; }
+            .subtitle { font-size: 1em; }
+            button { width: 100%; font-size: 18px; }
+            .game-container { padding: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -171,6 +183,18 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        // Responsive canvas sizing for mobile
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth || 860;
+            const aspect = 500 / 860; // preserve original aspect ratio
+            const width = containerWidth;
+            const height = Math.round(width * aspect);
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', () => { resizeCanvas(); draw(); });
         
         // Game state
         let gameRunning = false;
@@ -236,6 +260,37 @@
                 cleanAtPosition(mouseX, mouseY);
             }
         });
+
+        // Touch support for mobile
+        function updateTouchPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const t = e.touches && e.touches[0] ? e.touches[0] : (e.changedTouches && e.changedTouches[0]);
+            if (!t) return;
+            mouseX = t.clientX - rect.left;
+            mouseY = t.clientY - rect.top;
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isMouseDown = true;
+            updateTouchPosition(e);
+            if (gameRunning && !gamePaused) {
+                cleanAtPosition(mouseX, mouseY);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            updateTouchPosition(e);
+            if (isMouseDown && gameRunning && !gamePaused) {
+                cleanAtPosition(mouseX, mouseY);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isMouseDown = false;
+        }, { passive: false });
         
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
@@ -626,6 +681,7 @@
         }
         
         // Initialize the game
+        resizeCanvas();
         draw();
         updateUI();
         addWorkLog("Welcome to Dirty Work! Ready to get your hands dirty?");
