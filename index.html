@@ -32,11 +32,13 @@
       font-size: 1.5em;
       flex: 1;
     }
+    /* Navigation */
     nav {
       display: flex;
       justify-content: center;
       background-color: #222;
     }
+    .nav-links { display: flex; }
     nav button {
       padding: 1em 2em;
       background: none;
@@ -64,6 +66,19 @@
       margin-top: 0.5em;
       font-style: italic;
       color: #aaa;
+    }
+
+    /* Mobile nav toggle */
+    .nav-toggle {
+      display: none;
+      background: none;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 0.5em 0.75em;
+      border-radius: 6px;
+      font-size: 1.25em;
+      line-height: 1;
+      cursor: pointer;
     }
 
     .leader-grid {
@@ -149,11 +164,16 @@
       margin-left: 10px;
     }
 
-    @media only screen and (max-width: 620px) {
-      /* For mobile phones: */
-      .main {
-        width: 100%;
-      }
+    @media only screen and (max-width: 768px) {
+      header { position: sticky; top: 0; z-index: 1000; }
+      .nav-toggle { display: inline-block; }
+      /* Collapse nav by default on small screens */
+      nav { display: none; }
+      nav.open { display: block; }
+      nav { background-color: #222; }
+      .nav-links { flex-direction: column; }
+      nav button { width: 100%; text-align: left; padding: 1em; border-top: 1px solid #333; }
+      .motto { margin: 0.5em 1em; }
     }
   </style>
 </head>
@@ -162,16 +182,19 @@
   <header>
     <img src="img/logo.png" alt="Stormpire Logo" />
     <h1>Stormpire</h1>
+    <button id="navToggle" class="nav-toggle" aria-controls="primary-nav" aria-expanded="false" aria-label="Toggle navigation">☰</button>
   </header>
   <div class="motto">"For the Stormpire"</div>
 
-  <nav>
-    <button class="tab-btn active" onclick="showTab('home')">Home</button>
-    <button class="tab-btn" onclick="showTab('history')">History</button>
-    <button class="tab-btn" onclick="showTab('about')">About Us</button>
-    <button class="tab-btn" onclick="showTab('discord')">Discord</button>
-    <button class="tab-btn" onclick="showTab('analytics')">Analytics</button>
-    <button class="tab-btn" onclick="showTab('store')">Store</button>
+  <nav id="primary-nav">
+    <div class="nav-links">
+      <button class="tab-btn active" onclick="showTab('home')">Home</button>
+      <button class="tab-btn" onclick="showTab('history')">History</button>
+      <button class="tab-btn" onclick="showTab('about')">About Us</button>
+      <button class="tab-btn" onclick="showTab('discord')">Discord</button>
+      <button class="tab-btn" onclick="showTab('analytics')">Analytics</button>
+      <button class="tab-btn" onclick="showTab('store')">Store</button>
+    </div>
   </nav>
 
   <main>
@@ -695,6 +718,24 @@
       startAnimation();
     });
 
+    // Mobile navigation toggle
+    const navToggleBtn = document.getElementById('navToggle');
+    if (navToggleBtn) {
+      navToggleBtn.addEventListener('click', () => {
+        // Scroll to top when the menu toggle is clicked
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (_) {
+          // Fallback for older browsers
+          window.scrollTo(0, 0);
+        }
+        const nav = document.getElementById('primary-nav');
+        if (!nav) return;
+        const isOpen = nav.classList.toggle('open');
+        navToggleBtn.setAttribute('aria-expanded', String(isOpen));
+      });
+    }
+
     function showTab(tabId) {
       // Hide all sections
       document.querySelectorAll("section").forEach(section => {
@@ -714,6 +755,14 @@
         btn.textContent.toLowerCase().includes(tabId)
       );
       if (clickedButton) clickedButton.classList.add("active");
+
+      // Close the mobile menu after selection
+      const nav = document.getElementById('primary-nav');
+      const toggleBtn = document.getElementById('navToggle');
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        nav && nav.classList.remove('open');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+      }
     }
   </script>
 
