@@ -27,8 +27,8 @@
         h1 {
             text-align: center;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            margin: 10px 0 20px 0;
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin: 6px 0 14px 0;
+            font-size: clamp(1.2rem, 3vw, 2rem);
         }
 
         .game-area {
@@ -264,9 +264,22 @@
             opacity: 0.8;
         }
 
-        /* Hidden by default; shown on mobile via media query */
+        /* Drawer toggle button: visible and fixed */
         .drawer-toggle-btn {
-            display: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 1002;
+            background: rgba(0,0,0,0.35);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 24px;
+            padding: 10px 14px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
         }
 
         .buttons {
