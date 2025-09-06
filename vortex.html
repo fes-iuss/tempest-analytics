@@ -180,6 +180,8 @@
                 width: 80vw;
                 max-width: 340px;
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* smooth finger scrolling */
+                overscroll-behavior: contain;
                 transform: translateX(-100%);
                 transition: transform 0.25s ease-out;
                 z-index: 1001;
@@ -219,6 +221,7 @@
             overflow-y: auto;
             margin-bottom: 15px;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y; /* allow vertical finger scrolling */
         }
 
         @media (min-width: 768px) {
@@ -819,6 +822,8 @@
                         openBtn.setAttribute('aria-expanded', 'false');
                     }
                 };
+                // expose to instance so selectMember can close it
+                this.setDrawer = setDrawer;
                 openBtn.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
                 overlay.addEventListener('click', () => setDrawer(false));
                 // Close drawer after selecting a member (mobile UX)
@@ -857,12 +862,6 @@
                         this.selectMember(member);
                     });
 
-                    // Touch events for mobile
-                    item.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        this.selectMember(member);
-                    }, { passive: false });
-
                     listElement.appendChild(item);
                 });
             }
@@ -882,6 +881,10 @@
                 }
                 this.renderMemberList();
                 this.updateInfo();
+                // Close drawer on mobile after selecting a member
+                if (this.isMobile && this.setDrawer) {
+                    this.setDrawer(false);
+                }
             }
 
             removeMemberFromGrid(member) {
