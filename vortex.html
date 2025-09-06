@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vortex Base Organizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 10px 0 20px 0;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Mobile-first responsive layout */
+        @media (min-width: 768px) {
+            .game-area {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+
+        .grid-container {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            order: 2;
+        }
+
+        @media (min-width: 768px) {
+            .grid-container {
+                order: 1;
+            }
+        }
+
+        .grid-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 60vh;
+            border: 2px solid #555;
+            border-radius: 5px;
+            background: #333;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(40, 25px);
+            grid-template-rows: repeat(40, 25px);
+            gap: 1px;
+            background: #333;
+            min-width: fit-content;
+        }
+
+        /* Larger cells on mobile */
+        @media (max-width: 767px) {
+            .grid {
+                grid-template-columns: repeat(40, 20px);
+                grid-template-rows: repeat(40, 20px);
+            }
+        }
+
+        .cell {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 25px;
+            height: 25px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 767px) {
+            .cell {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .cell:hover, .cell:active {
+            background: #e0e0e0;
+        }
+
+        .obstacle-1x1 {
+            background: #8B0000 !important;
+            cursor: not-allowed !important;
+        }
+
+        .obstacle-3x3 {
+            background: #4B0000 !important;
+            cursor: not-allowed !important;
+        }
+
+        .placed-block {
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            /* border: 2px solid #000 !important; */
+            cursor: pointer !important;
+            position: relative;
+        }
+
+        @media (max-width: 767px) {
+            .placed-block {
+                font-size: 6px;
+            }
+        }
+
+        .placed-block:hover, .placed-block:active {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        .preview {
+            background: rgba(76, 175, 80, 0.5) !important;
+            border: 2px dashed #4CAF50 !important;
+        }
+
+        .invalid-preview {
+            background: rgba(244, 67, 54, 0.5) !important;
+            border: 2px dashed #f44336 !important;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            order: 1;
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                min-width: 300px;
+                max-height: 70vh;
+                overflow-y: auto;
+                order: 2;
+            }
+        }
+
+        .member-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (min-width: 768px) {
+            .member-list {
+                max-height: 400px;
+            }
+        }
+
+        .member-item {
+            background: rgba(255,255,255,0.2);
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            touch-action: manipulation;
+            min-height: 44px; /* iOS touch target minimum */
+        }
+
+        .member-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid #000;
+            flex-shrink: 0;
+        }
+
+        .member-item:hover, .member-item:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .member-item.selected {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .member-item.placed {
+            background: rgba(100,100,100,0.3);
+            opacity: 0.8;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 480px) {
+            .buttons {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            touch-action: manipulation;
+            min-height: 44px; /* iOS touch target minimum */
+        }
+
+        button:hover, button:active {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .info {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .mode-indicator {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .mode-place {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .mode-move {
+            background: rgba(255, 152, 0, 0.3);
+        }
+
+        /* Mobile zoom controls */
+        .zoom-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .zoom-controls {
+                display: none;
+            }
+        }
+
+        .zoom-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Touch feedback */
+        .cell:active, .member-item:active, button:active {
+            transform: scale(0.95);
+        }
+
+        /* Scrollbar styling for mobile */
+        .grid-wrapper::-webkit-scrollbar,
+        .member-list::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .grid-wrapper::-webkit-scrollbar-track,
+        .member-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .grid-wrapper::-webkit-scrollbar-thumb,
+        .member-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        /* Loading indicator */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+        }
+
+        /* Prevent text selection on mobile */
+        .grid, .member-item, button {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌪️ Tempest Vortex Base Organizer 🌪️</h1>
+        
+        <div class="game-area">
+            <div class="grid-container">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomOut">−</button>
+                    <button class="zoom-btn" id="zoomIn">+</button>
+                    <button class="zoom-btn" id="zoomReset">⌂</button>
+                </div>
+                <div id="gridWrapper" class="grid-wrapper">
+                    <div id="grid" class="grid"></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f0f0f0;"></div>
+                        <span>Empty</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8B0000;"></div>
+                        <span>Banner</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4B0000;"></div>
+                        <span>Bear Pit</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4CAF50; border: 2px solid #000;"></div>
+                        <span>Alliance Member</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div id="modeIndicator" class="mode-indicator">
+                    Mode: Select a Member
+                </div>
+
+                <h3>Alliance Members</h3>
+                <div id="memberList" class="member-list"></div>
+                
+                <div class="buttons">
+                    <button id="clearBtn">Clear All</button>
+                    <button id="randomBtn">Random</button>
+                    <button id="resetObstaclesBtn">Reset</button>
+                    <button id="centerGridBtn">Center Grid</button>
+                </div>
+
+                <div class="info">
+                    <div><strong>Selected:</strong> <span id="selectedMember">None</span></div>
+                    <div><strong>Placed:</strong> <span id="placedCount">0</span> / <span id="totalCount">0</span></div>
+                    <div style="margin-top: 10px; font-size: 12px;">
+                        <strong>📱 Mobile:</strong> Tap member → Tap grid to place<br>
+                        <strong>🖱️ Desktop:</strong> Click member → Click grid to place
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class VortexOrganizer {
+            constructor() {
+                // Editable clan member list
+                this.clanMembers = [
+                    'alprofessorlll','anxiety','Atomic Gummybear','Basteeboi','BIGPAPALOS','Bjorn Eisenseite','Brink!','cam0','Coop','crosad','Daffa','Dahlia','Defender','Dexter','Dirty_Work','Dmitch','Doc','Edward_elric','EggHo','Fes','Flameheart','iGrobi','Junebug','Kaiden','Keane','KilLua_20','Kingship Men','KingZ','Kirk Lazarus','kstl836','Kylar Stern','Lekot','LiveLight','Lord Montblanc','Lord Rocking','Lord Tiger','LordFarQuat','Loreii','Lost Soul','Lostine Lad','Marigon','Meeps','Millie 23','MostValuedPrick','Music','Newworldorder','Nightmare','NoFear','NoMana','Odd','Opt2mst','Paracelsus','Pimpchicken','Prince Charming','Princess P','PYR8HD','Quan','QuiJonGin','Ramschackle','RaptoR','Realm','Rebula','Roland','Rucksackzl4','Rush','rush','SARICICEK','Sassquatch','Scar','Sinzargi','Skull6O','SnoweR','SpankyMo','Talon9','Taxha','Teleplayer','Toast1904','Tom Killer','TomTom','TuPutaMadreoG','Vaxo','WhiteGhost','Wiamilovich','Wise Purrlord','WorkHardPlayHard','XhK','y2kris99','Yahya','Zephyray','سعور','가시3','乂阿志乂','冷面佛','古魂Soul'
+
+                ];
+
+                // Generate unique colors for each member
+                this.memberColors = this.generateMemberColors();
+
+                // Editable obstacles configuration
+                this.obstacles = {
+                    // 1x1 obstacles (small structures, pillars, etc.)
+                    small: [
+                        {x: 10, y: 3}, {x: 17, y: 4}, 
+                        {x: 3, y: 10}, {x: 10, y: 10}, {x: 17, y: 11}, {x: 24, y: 10},
+                        {x: 3, y: 17}, {x: 10, y: 17}, {x: 17, y: 18}, {x: 24, y: 17},
+                        {x: 3, y: 24}, {x: 10, y: 24}, {x: 17, y: 24}, {x: 24, y: 24},
+                        {x: 3, y: 31}, {x: 10, y: 31}, {x: 17, y: 31}, {x: 24, y: 31},
+                    ],
+                    // 3x3 obstacles (large structures, command centers, etc.)
+                    large: [
+                        {x: 14, y: 19},   // Bear Trap 1
+                        {x: 12, y: 11}, // Bear Trap 2
+                    ]
+                };
+
+                this.gridSize = 40;
+                this.selectedMember = null;
+                this.movingMember = null;
+                this.placedMembers = new Map(); // member -> {x, y}
+                this.grid = [];
+                this.zoomLevel = 1;
+                this.isMobile = window.innerWidth <= 767;
+                
+                this.initializeGrid();
+                this.setupEventListeners();
+                this.renderMemberList();
+                this.updateInfo();
+                this.centerGrid();
+            }
+
+            generateMemberColors() {
+                const colors = {};
+                const baseColors = [
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+                    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#F4D03F',
+                    '#AED6F1', '#A9DFBF', '#F9E79F', '#D7BDE2', '#A3E4D7',
+                    '#FFB347', '#87CEEB', '#DDA0DD', '#F0E68C', '#98FB98',
+                    '#FFE4E1', '#B0E0E6', '#FFDAB9'
+                ];
+
+                this.clanMembers.forEach((member, index) => {
+                    colors[member] = baseColors[index % baseColors.length];
+                });
+
+                return colors;
+            }
+
+            initializeGrid() {
+                const gridElement = document.getElementById('grid');
+                gridElement.innerHTML = '';
+                
+                // Initialize grid data structure
+                this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
+                
+                // Place obstacles
+                this.placeObstacles();
+                
+                // Create grid cells
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.x = x;
+                        cell.dataset.y = y;
+                        
+                        if (this.grid[y][x] === 'obstacle-1x1') {
+                            cell.classList.add('obstacle-1x1');
+                        } else if (this.grid[y][x] === 'obstacle-3x3') {
+                            cell.classList.add('obstacle-3x3');
+                        }
+                        
+                        gridElement.appendChild(cell);
+                    }
+                }
+            }
+
+            placeObstacles() {
+                // Place 1x1 obstacles
+                this.obstacles.small.forEach(obs => {
+                    if (obs.x >= 0 && obs.x < this.gridSize && obs.y >= 0 && obs.y < this.gridSize) {
+                        this.grid[obs.y][obs.x] = 'obstacle-1x1';
+                    }
+                });
+
+                // Place 3x3 obstacles
+                this.obstacles.large.forEach(obs => {
+                    for (let dy = 0; dy < 3; dy++) {
+                        for (let dx = 0; dx < 3; dx++) {
+                            const x = obs.x + dx;
+                            const y = obs.y + dy;
+                            if (x >= 0 && x < this.gridSize && y >= 0 && y < this.gridSize) {
+                                this.grid[y][x] = 'obstacle-3x3';
+                            }
+                        }
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // Grid click/touch handler
+                document.getElementById('grid').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('cell')) {
+                        const x = parseInt(e.target.dataset.x);
+                        const y = parseInt(e.target.dataset.y);
+                        this.handleCellClick(x, y);
+                    }
+                });
+
+                // Touch events for mobile
+                if (this.isMobile) {
+                    document.getElementById('grid').addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (element && element.classList.contains('cell')) {
+                            const x = parseInt(element.dataset.x);
+                            const y = parseInt(element.dataset.y);
+                            this.handleCellClick(x, y);
+                        }
+                    }, { passive: false });
+                }
+
+                // Grid hover handler for desktop preview
+                if (!this.isMobile) {
+                    document.getElementById('grid').addEventListener('mouseover', (e) => {
+                        if (e.target.classList.contains('cell')) {
+                            const x = parseInt(e.target.dataset.x);
+                            const y = parseInt(e.target.dataset.y);
+                            
+                            if (this.selectedMember || this.movingMember) {
+                                this.showPreview(x, y);
+                            }
+                        }
+                    });
+
+                    document.getElementById('grid').addEventListener('mouseout', () => {
+                        this.clearPreview();
+                    });
+                }
+
+                // Button handlers
+                document.getElementById('clearBtn').addEventListener('click', () => {
+                    this.clearAllPlacements();
+                });
+
+                document.getElementById('randomBtn').addEventListener('click', () => {
+                    this.randomPlacement();
+                });
+
+                document.getElementById('resetObstaclesBtn').addEventListener('click', () => {
+                    this.resetObstacles();
+                });
+
+                document.getElementById('centerGridBtn').addEventListener('click', () => {
+                    this.centerGrid();
+                });
+
+                // Zoom controls for mobile
+                document.getElementById('zoomIn').addEventListener('click', () => {
+                    this.zoomGrid(1.2);
+                });
+
+                document.getElementById('zoomOut').addEventListener('click', () => {
+                    this.zoomGrid(0.8);
+                });
+
+                document.getElementById('zoomReset').addEventListener('click', () => {
+                    this.resetZoom();
+                });
+
+                // Handle orientation change
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        this.centerGrid();
+                    }, 100);
+                });
+
+                // Handle resize
+                window.addEventListener('resize', () => {
+                    this.isMobile = window.innerWidth <= 767;
+                });
+            }
+
+            renderMemberList() {
+                const listElement = document.getElementById('memberList');
+                listElement.innerHTML = '';
+
+                this.clanMembers.forEach(member => {
+                    const item = document.createElement('div');
+                    item.className = 'member-item';
+                    
+                    const colorDiv = document.createElement('div');
+                    colorDiv.className = 'member-color';
+                    colorDiv.style.backgroundColor = this.memberColors[member];
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = member;
+                    
+                    item.appendChild(colorDiv);
+                    item.appendChild(nameSpan);
+                    
+                    if (this.placedMembers.has(member)) {
+                        item.classList.add('placed');
+                    }
+                    
+                    if (this.selectedMember === member) {
+                        item.classList.add('selected');
+                    }
+
+                    item.addEventListener('click', () => {
+                        this.selectMember(member);
+                    });
+
+                    // Touch events for mobile
+                    item.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.selectMember(member);
+                    }, { passive: false });
+
+                    listElement.appendChild(item);
+                });
+            }
+
+            selectMember(member) {
+                if (this.placedMembers.has(member)) {
+                    // If member is already placed, enter move mode
+                    this.movingMember = member;
+                    this.selectedMember = null;
+                    this.removeMemberFromGrid(member);
+                    this.updateModeIndicator('move', member);
+                } else {
+                    // If member is not placed, enter place mode
+                    this.selectedMember = member;
+                    this.movingMember = null;
+                    this.updateModeIndicator('place', member);
+                }
+                this.renderMemberList();
+                this.updateInfo();
+            }
+
+            removeMemberFromGrid(member) {
+                const position = this.placedMembers.get(member);
+                if (position) {
+                    // Clear the 2x2 area
+                    for (let dy = 0; dy < 2; dy++) {
+                        for (let dx = 0; dx < 2; dx++) {
+                            this.grid[position.y + dy][position.x + dx] = null;
+                        }
+                    }
+                    this.placedMembers.delete(member);
+                    this.renderGrid();
+                }
+            }
+
+            handleCellClick(x, y) {
+                const member = this.selectedMember || this.movingMember;
+                if (!member) {
+                    // Check if clicking on a placed member to move them
+                    const clickedMember = this.getMemberAtPosition(x, y);
+                    if (clickedMember) {
+                        this.selectMember(clickedMember);
+                    }
+                    return;
+                }
+                
+                if (this.canPlaceBlock(x, y)) {
+                    this.placeBlock(x, y, member);
+                    this.placedMembers.set(member, {x, y});
+                    this.selectedMember = null;
+                    this.movingMember = null;
+                    this.renderMemberList();
+                    this.updateInfo();
+                    this.clearPreview();
+                    this.updateModeIndicator('none');
+                } else if (this.isMobile) {
+                    // Show brief feedback on mobile for invalid placement
+                    this.showInvalidPlacementFeedback(x, y);
+                }
+            }
+
+            showInvalidPlacementFeedback(x, y) {
+                // Brief visual feedback for invalid placement on mobile
+                for (let dy = 0; dy < 2; dy++) {
+                    for (let dx = 0; dx < 2; dx++) {
+                        const newX = x + dx;
+                        const newY = y + dy;
+                        
+                        if (newX < this.gridSize && newY < this.gridSize) {
+                            const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
+                            if (cell) {
+                                cell.classList.add('invalid-preview');
+                                setTimeout(() => {
+                                    cell.classList.remove('invalid-preview');
+                                }, 500);
+                            }
+                        }
+                    }
+                }
+            }
+
+            getMemberAtPosition(x, y) {
+                const cellContent = this.grid[y] && this.grid[y][x];
+                if (cellContent && !cellContent.startsWith('obstacle')) {
+                    return cellContent;
+                }
+                return null;
+            }
+
+            canPlaceBlock(x, y) {
+                // Check if 2x2 block can be placed at position (x, y)
+                for (let dy = 0; dy < 2; dy++) {
+                    for (let dx = 0; dx < 2; dx++) {
+                        const newX = x + dx;
+                        const newY = y + dy;
+                        
+                        // Check bounds
+                        if (newX >= this.gridSize || newY >= this.gridSize) {
+                            return false;
+                        }
+                        
+                        // Check if cell is occupied
+                        if (this.grid[newY][newX] !== null) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            placeBlock(x, y, member) {
+                // Place 2x2 block
+                for (let dy = 0; dy < 2; dy++) {
+                    for (let dx = 0; dx < 2; dx++) {
+                        this.grid[y + dy][x + dx] = member;
+                    }
+                }
+                this.renderGrid();
+            }
+
+            renderGrid() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const x = parseInt(cell.dataset.x);
+                    const y = parseInt(cell.dataset.y);
+                    const content = this.grid[y][x];
+                    
+                    // Reset classes
+                    cell.className = 'cell';
+                    cell.textContent = '';
+                    cell.style.backgroundColor = '';
+                    
+                    if (content === 'obstacle-1x1') {
+                        cell.classList.add('obstacle-1x1');
+                    } else if (content === 'obstacle-3x3') {
+                        cell.classList.add('obstacle-3x3');
+                    } else if (content && !content.startsWith('obstacle')) {
+                        cell.classList.add('placed-block');
+                        cell.style.backgroundColor = this.memberColors[content];
+                        cell.textContent = content.split(' ')[0]; // Show first word of name
+                        cell.title = content; // Show full name on hover
+                    }
+                });
+            }
+
+            showPreview(x, y) {
+                this.clearPreview();
+                
+                const member = this.selectedMember || this.movingMember;
+                if (!member) return;
+                
+                const canPlace = this.canPlaceBlock(x, y);
+                const previewClass = canPlace ? 'preview' : 'invalid-preview';
+                
+                for (let dy = 0; dy < 2; dy++) {
+                    for (let dx = 0; dx < 2; dx++) {
+                        const newX = x + dx;
+                        const newY = y + dy;
+                        
+                        if (newX < this.gridSize && newY < this.gridSize) {
+                            const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
+                            if (cell && !cell.classList.contains('obstacle-1x1') && !cell.classList.contains('obstacle-3x3') && !cell.classList.contains('placed-block')) {
+                                cell.classList.add(previewClass);
+                            }
+                        }
+                    }
+                }
+            }
+
+            clearPreview() {
+                document.querySelectorAll('.preview, .invalid-preview').forEach(cell => {
+                    cell.classList.remove('preview', 'invalid-preview');
+                });
+            }
+
+            updateModeIndicator(mode, member = null) {
+                const indicator = document.getElementById('modeIndicator');
+                indicator.className = 'mode-indicator';
+                
+                switch(mode) {
+                    case 'place':
+                        indicator.classList.add('mode-place');
+                        indicator.textContent = `Mode: Place ${member}`;
+                        break;
+                    case 'move':
+                        indicator.classList.add('mode-move');
+                        indicator.textContent = `Mode: Move ${member}`;
+                        break;
+                    default:
+                        indicator.textContent = 'Mode: Select a Member';
+                }
+            }
+
+            zoomGrid(factor) {
+                this.zoomLevel *= factor;
+                this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel)); // Limit zoom range
+                
+                const grid = document.getElementById('grid');
+                
+                grid.style.transform = `scale(${this.zoomLevel})`;
+                grid.style.transformOrigin = 'top left';
+            }
+
+            resetZoom() {
+                this.zoomLevel = 1;
+                const grid = document.getElementById('grid');
+                grid.style.transform = 'scale(1)';
+                this.centerGrid();
+            }
+
+            centerGrid() {
+                const gridWrapper = document.getElementById('gridWrapper');
+                const grid = document.getElementById('grid');
+                
+                // Calculate center position
+                setTimeout(() => {
+                    const wrapperRect = gridWrapper.getBoundingClientRect();
+                    const gridRect = grid.getBoundingClientRect();
+                    
+                    const centerX = (gridRect.width * this.zoomLevel - wrapperRect.width) / 2;
+                    const centerY = (gridRect.height * this.zoomLevel - wrapperRect.height) / 2;
+                    
+                    gridWrapper.scrollLeft = Math.max(0, centerX);
+                    gridWrapper.scrollTop = Math.max(0, centerY);
+                }, 50);
+            }
+
+            clearAllPlacements() {
+                // Remove all placed members from grid
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (this.grid[y][x] && !this.grid[y][x].startsWith('obstacle')) {
+                            this.grid[y][x] = null;
+                        }
+                    }
+                }
+                
+                this.placedMembers.clear();
+                this.selectedMember = null;
+                this.movingMember = null;
+                this.renderGrid();
+                this.renderMemberList();
+                this.updateInfo();
+                this.updateModeIndicator('none');
+            }
+
+            randomPlacement() {
+                this.clearAllPlacements();
+                
+                const shuffledMembers = [...this.clanMembers].sort(() => Math.random() - 0.5);
+                
+                shuffledMembers.forEach(member => {
+                    let attempts = 0;
+                    while (attempts < 200) { // More attempts for larger grid
+                        const x = Math.floor(Math.random() * (this.gridSize - 1));
+                        const y = Math.floor(Math.random() * (this.gridSize - 1));
+                        
+                        if (this.canPlaceBlock(x, y)) {
+                            this.placeBlock(x, y, member);
+                            this.placedMembers.set(member, {x, y});
+                            break;
+                        }
+                        attempts++;
+                    }
+                });
+                
+                this.renderMemberList();
+                this.updateInfo();
+                this.updateModeIndicator('none');
+            }
+
+            resetObstacles() {
+                this.clearAllPlacements();
+                this.initializeGrid();
+                this.renderGrid();
+            }
+
+            updateInfo() {
+                const selectedText = this.selectedMember || this.movingMember || 'None';
+                document.getElementById('selectedMember').textContent = selectedText;
+                document.getElementById('placedCount').textContent = this.placedMembers.size;
+                document.getElementById('totalCount').textContent = this.clanMembers.length;
+            }
+        }
+
+        // Initialize the game when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            // Show loading indicator briefly
+            document.body.innerHTML = '<div class="loading">🌪️ Loading Vortex Base Organizer...</div>' + document.body.innerHTML;
+            
+            setTimeout(() => {
+                document.querySelector('.loading').remove();
+                new VortexOrganizer();
+            }, 500);
+        });
+
+        // Prevent zoom on double tap for iOS
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.classList.contains('cell') || e.target.classList.contains('member-item')) {
+                e.preventDefault();
+            }
+        });
+
+        // Handle viewport changes for mobile browsers
+        function handleViewportChange() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        window.addEventListener('resize', handleViewportChange);
+        window.addEventListener('orientationchange', handleViewportChange);
+        handleViewportChange();
+    </script>
+</body>
+</html>
