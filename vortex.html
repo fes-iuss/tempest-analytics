@@ -67,6 +67,7 @@
             border-radius: 5px;
             background: #333;
             -webkit-overflow-scrolling: touch;
+            touch-action: none; /* we handle gestures (two-finger pan, pinch) */
         }
 
         .grid {
@@ -169,6 +170,50 @@
             }
         }
 
+        /* Mobile flyout drawer for controls */
+        @media (max-width: 767px) {
+            .controls {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 80vw;
+                max-width: 340px;
+                overflow-y: auto;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease-out;
+                z-index: 1001;
+                box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+            }
+            .controls.open {
+                transform: translateX(0);
+            }
+            .drawer-toggle-btn {
+                display: inline-flex;
+                position: fixed;
+                bottom: 16px;
+                right: 16px;
+                z-index: 1002;
+                background: rgba(255,255,255,0.2);
+                color: #fff;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 24px;
+                padding: 10px 14px;
+                font-size: 14px;
+                backdrop-filter: blur(10px);
+            }
+            .overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 1000;
+                display: none;
+            }
+            .overlay.show {
+                display: block;
+            }
+        }
+
         .member-list {
             max-height: 250px;
             overflow-y: auto;
@@ -217,6 +262,11 @@
         .member-item.placed {
             background: rgba(100,100,100,0.3);
             opacity: 0.8;
+        }
+
+        /* Hidden by default; shown on mobile via media query */
+        .drawer-toggle-btn {
+            display: none;
         }
 
         .buttons {
@@ -410,7 +460,9 @@
                 </div>
             </div>
 
-            <div class="controls">
+            <div id="overlay" class="overlay"></div>
+            <button id="openMembersBtn" class="drawer-toggle-btn" aria-controls="controlsDrawer" aria-expanded="false">Members & Controls</button>
+            <div id="controlsDrawer" class="controls" aria-hidden="true">
                 <div id="modeIndicator" class="mode-indicator">
                     Mode: Select a Member
                 </div>
@@ -473,6 +525,14 @@
                 this.grid = [];
                 this.zoomLevel = 1;
                 this.isMobile = window.innerWidth <= 767;
+                this.gesture = {
+                    active: false,
+                    startDistance: 0,
+                    lastDistance: 0,
+                    startMid: { x: 0, y: 0 },
+                    lastMid: { x: 0, y: 0 },
+                };
+                this.tapStart = null;
                 
                 this.initializeGrid();
                 this.setupEventListeners();
@@ -562,16 +622,36 @@
 
                 // Touch events for mobile
                 if (this.isMobile) {
-                    document.getElementById('grid').addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        const touch = e.touches[0];
-                        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                        if (element && element.classList.contains('cell')) {
-                            const x = parseInt(element.dataset.x);
-                            const y = parseInt(element.dataset.y);
-                            this.handleCellClick(x, y);
+                    const grid = document.getElementById('grid');
+                    grid.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 1) {
+                            const t = e.touches[0];
+                            this.tapStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+                        } else {
+                            this.tapStart = null;
                         }
-                    }, { passive: false });
+                    }, { passive: true });
+
+                    grid.addEventListener('touchend', (e) => {
+                        // Handle single-finger tap-to-place
+                        if (this.gesture.active) return;
+                        if (e.touches.length === 0 && e.changedTouches.length === 1 && this.tapStart) {
+                            const t = e.changedTouches[0];
+                            const dt = Date.now() - this.tapStart.time;
+                            const dx = t.clientX - this.tapStart.x;
+                            const dy = t.clientY - this.tapStart.y;
+                            const moved = Math.hypot(dx, dy);
+                            if (dt < 300 && moved < 10) {
+                                const element = document.elementFromPoint(t.clientX, t.clientY);
+                                if (element && element.classList.contains('cell')) {
+                                    const x = parseInt(element.dataset.x);
+                                    const y = parseInt(element.dataset.y);
+                                    this.handleCellClick(x, y);
+                                }
+                            }
+                        }
+                        this.tapStart = null;
+                    }, { passive: true });
                 }
 
                 // Grid hover handler for desktop preview
@@ -632,6 +712,105 @@
                 // Handle resize
                 window.addEventListener('resize', () => {
                     this.isMobile = window.innerWidth <= 767;
+                });
+
+                // Two-finger pan and pinch on grid wrapper (mobile)
+                const gridWrapper = document.getElementById('gridWrapper');
+                const getMidpoint = (t1, t2) => ({ x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 });
+                const getDistance = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+                const clientToContent = (clientX, clientY) => {
+                    const rect = gridWrapper.getBoundingClientRect();
+                    const offsetX = clientX - rect.left + gridWrapper.scrollLeft;
+                    const offsetY = clientY - rect.top + gridWrapper.scrollTop;
+                    return { x: offsetX / this.zoomLevel, y: offsetY / this.zoomLevel };
+                };
+
+                gridWrapper.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const [t1, t2] = [e.touches[0], e.touches[1]];
+                        this.gesture.active = true;
+                        this.gesture.startDistance = getDistance(t1, t2);
+                        this.gesture.lastDistance = this.gesture.startDistance;
+                        this.gesture.startMid = getMidpoint(t1, t2);
+                        this.gesture.lastMid = this.gesture.startMid;
+                        // Anchor content point under midpoint
+                        this.gesture.anchorContent = clientToContent(this.gesture.startMid.x, this.gesture.startMid.y);
+                    }
+                }, { passive: false });
+
+                gridWrapper.addEventListener('touchmove', (e) => {
+                    if (this.gesture.active && e.touches.length === 2) {
+                        e.preventDefault();
+                        const [t1, t2] = [e.touches[0], e.touches[1]];
+                        const mid = getMidpoint(t1, t2);
+                        const dist = getDistance(t1, t2);
+
+                        // Pan by midpoint delta
+                        const dx = mid.x - this.gesture.lastMid.x;
+                        const dy = mid.y - this.gesture.lastMid.y;
+                        gridWrapper.scrollLeft -= dx;
+                        gridWrapper.scrollTop -= dy;
+
+                        // Pinch zoom
+                        const scaleChange = dist / this.gesture.lastDistance;
+                        if (scaleChange && isFinite(scaleChange)) {
+                            const prev = this.zoomLevel;
+                            this.zoomGrid(scaleChange);
+                            const next = this.zoomLevel;
+                            if (next !== prev) {
+                                // Keep content under fingers stable
+                                const rect = gridWrapper.getBoundingClientRect();
+                                const midClient = mid;
+                                const targetScrollLeft = this.gesture.anchorContent.x * next - (midClient.x - rect.left);
+                                const targetScrollTop = this.gesture.anchorContent.y * next - (midClient.y - rect.top);
+                                gridWrapper.scrollLeft = targetScrollLeft;
+                                gridWrapper.scrollTop = targetScrollTop;
+                            }
+                        }
+
+                        this.gesture.lastMid = mid;
+                        this.gesture.lastDistance = dist;
+                    }
+                }, { passive: false });
+
+                const endGesture = () => {
+                    this.gesture.active = false;
+                    this.gesture.startDistance = 0;
+                    this.gesture.lastDistance = 0;
+                    this.gesture.startMid = { x: 0, y: 0 };
+                    this.gesture.lastMid = { x: 0, y: 0 };
+                    this.gesture.anchorContent = null;
+                };
+
+                gridWrapper.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2 && this.gesture.active) endGesture();
+                });
+                gridWrapper.addEventListener('touchcancel', () => endGesture());
+
+                // Drawer (flyout) toggle handlers
+                const drawer = document.getElementById('controlsDrawer');
+                const overlay = document.getElementById('overlay');
+                const openBtn = document.getElementById('openMembersBtn');
+                const setDrawer = (open) => {
+                    if (open) {
+                        drawer.classList.add('open');
+                        drawer.setAttribute('aria-hidden', 'false');
+                        overlay.classList.add('show');
+                        openBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        drawer.classList.remove('open');
+                        drawer.setAttribute('aria-hidden', 'true');
+                        overlay.classList.remove('show');
+                        openBtn.setAttribute('aria-expanded', 'false');
+                    }
+                };
+                openBtn.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+                overlay.addEventListener('click', () => setDrawer(false));
+                // Close drawer after selecting a member (mobile UX)
+                document.getElementById('memberList').addEventListener('click', () => {
+                    if (window.innerWidth <= 767) setDrawer(false);
                 });
             }
 
@@ -889,10 +1068,8 @@
                 setTimeout(() => {
                     const wrapperRect = gridWrapper.getBoundingClientRect();
                     const gridRect = grid.getBoundingClientRect();
-                    
-                    const centerX = (gridRect.width * this.zoomLevel - wrapperRect.width) / 2;
-                    const centerY = (gridRect.height * this.zoomLevel - wrapperRect.height) / 2;
-                    
+                    const centerX = (gridRect.width - wrapperRect.width) / 2;
+                    const centerY = (gridRect.height - wrapperRect.height) / 2;
                     gridWrapper.scrollLeft = Math.max(0, centerX);
                     gridWrapper.scrollTop = Math.max(0, centerY);
                 }, 50);
