@@ -549,6 +549,7 @@
                     lastMid: { x: 0, y: 0 },
                 };
                 this.tapStart = null;
+                this.suppressClickUntil = 0; // prevent click after handled touch
                 
                 this.initializeGrid();
                 this.setupEventListeners();
@@ -629,6 +630,8 @@
             setupEventListeners() {
                 // Grid click/touch handler
                 document.getElementById('grid').addEventListener('click', (e) => {
+                    // Ignore synthetic click that follows a handled touch on mobile
+                    if (this.isMobile && Date.now() < this.suppressClickUntil) return;
                     if (e.target.classList.contains('cell')) {
                         const x = parseInt(e.target.dataset.x);
                         const y = parseInt(e.target.dataset.y);
@@ -663,6 +666,8 @@
                                     const x = parseInt(element.dataset.x);
                                     const y = parseInt(element.dataset.y);
                                     this.handleCellClick(x, y);
+                                    // Suppress the following synthetic click
+                                    this.suppressClickUntil = Date.now() + 500;
                                 }
                             }
                         }
@@ -902,6 +907,9 @@
             }
 
             handleCellClick(x, y) {
+                // Normalize origin so a tap on last row/col still places a 2x2 within bounds
+                x = Math.min(x, this.gridSize - 2);
+                y = Math.min(y, this.gridSize - 2);
                 const member = this.selectedMember || this.movingMember;
                 if (!member) {
                     // Check if clicking on a placed member to move them
@@ -949,7 +957,7 @@
 
             getMemberAtPosition(x, y) {
                 const cellContent = this.grid[y] && this.grid[y][x];
-                if (cellContent && !cellContent.startsWith('obstacle')) {
+                if (cellContent && typeof cellContent === 'string' && !cellContent.startsWith('obstacle')) {
                     return cellContent;
                 }
                 return null;
