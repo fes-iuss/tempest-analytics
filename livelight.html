@@ -57,6 +57,7 @@ The game is family-friendly and focuses on the positive theme of a dedicated tea
             background: #2c3e50;
             display: block;
             margin: 20px auto;
+            touch-action: none; /* allow custom touch handling without browser gestures */
         }
 
         #gameInfo {
@@ -153,6 +154,12 @@ The game is family-friendly and focuses on the positive theme of a dedicated tea
         let members = [];
         let particles = [];
         let keys = {};
+        // Touch control state
+        const touchControl = {
+            active: false,
+            x: 0,
+            y: 0
+        };
         let gameTimer;
         let animationId;
 
@@ -198,10 +205,22 @@ The game is family-friendly and focuses on the positive theme of a dedicated tea
 
         // Update player position
         function updatePlayer() {
-            if (keys['arrowup'] || keys['w']) player.y -= player.speed;
-            if (keys['arrowdown'] || keys['s']) player.y += player.speed;
-            if (keys['arrowleft'] || keys['a']) player.x -= player.speed;
-            if (keys['arrowright'] || keys['d']) player.x += player.speed;
+            if (touchControl.active) {
+                // Move toward touch point
+                const dx = touchControl.x - player.x;
+                const dy = touchControl.y - player.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 0.5) {
+                    const step = Math.min(player.speed, dist);
+                    player.x += (dx / dist) * step;
+                    player.y += (dy / dist) * step;
+                }
+            } else {
+                if (keys['arrowup'] || keys['w']) player.y -= player.speed;
+                if (keys['arrowdown'] || keys['s']) player.y += player.speed;
+                if (keys['arrowleft'] || keys['a']) player.x -= player.speed;
+                if (keys['arrowright'] || keys['d']) player.x += player.speed;
+            }
 
             // Keep player in bounds
             player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
@@ -446,6 +465,43 @@ The game is family-friendly and focuses on the positive theme of a dedicated tea
 
         // Initialize the game
         draw();
+
+        // Touch movement handlers (mobile friendly)
+        const toCanvasCoords = (clientX, clientY) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        };
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                e.preventDefault();
+                const t = e.touches[0];
+                const p = toCanvasCoords(t.clientX, t.clientY);
+                touchControl.active = true;
+                touchControl.x = p.x;
+                touchControl.y = p.y;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!touchControl.active) return;
+            const t = e.touches[0];
+            if (t) {
+                e.preventDefault();
+                const p = toCanvasCoords(t.clientX, t.clientY);
+                touchControl.x = p.x;
+                touchControl.y = p.y;
+            }
+        }, { passive: false });
+
+        const endTouch = () => { touchControl.active = false; };
+        canvas.addEventListener('touchend', endTouch);
+        canvas.addEventListener('touchcancel', endTouch);
     </script>
 </body>
 </html>
