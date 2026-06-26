@@ -1179,6 +1179,17 @@ function renderDetail() {
       ${sk.economy?'<div style="font-size:9px;color:#888;font-style:italic;margin-top:2px;">📦 Economy skill — no combat bonus</div>':''}
     </div>`;
   });
+  // Manager tactic indicator when inspecting the manager slot
+  if (activeSlot === 'mgr') {
+    const tac = managerTactic();
+    if (tac) {
+      html += `<div style="margin-top:8px;padding:8px;background:rgba(201,168,76,0.1);border:1px solid var(--border);border-radius:6px;">
+        <div style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:2px;">📋 Manager Tactic</div>
+        <div style="font-size:12px;color:var(--cream);font-weight:600;">${tac.icon} ${tac.name}</div>
+        <div style="font-size:10px;color:#888;margin-top:1px;">${tac.desc}</div>
+      </div>`;
+    }
+  }
   html += `</div>`;
   container.innerHTML = html;
 }
@@ -1310,13 +1321,14 @@ let redrawnClass = false;
 let draftStarted = false;
 
 // CPU hidden baseline — never shown to player.
-// Tuned so a weak draft almost always loses, an average draft is a genuine
-// coin-flip, and a strong/captain-optimized draft wins reliably.
-// Effective ratings ≈ Offense 176, Defense 165.
+// Tuned (with positional synergy + manager tactics in play) so a poorly built
+// team grinds out goalless draws and rarely wins, a typical draft is a real
+// coin-flip, and a well-positioned, tactically-managed side wins reliably.
+// Effective ratings ≈ Offense 194, Defense 186.
 const CPU_BASELINE = {
-  attack: 80, defense: 82, lethality: 48, health: 45,
-  dmg_taken_down: 18, enemy_atk_down: 18, enemy_def_down: 16,
-  enemy_leth_down: 9, enemy_dmg_taken_up: 16, skill_dmg: 16
+  attack: 88, defense: 88, lethality: 52, health: 48,
+  dmg_taken_down: 20, enemy_atk_down: 20, enemy_def_down: 18,
+  enemy_leth_down: 10, enemy_dmg_taken_up: 18, skill_dmg: 18
 };
 
 function resetDraft() {
@@ -1515,11 +1527,40 @@ function finishDraft() {
   simulateMatch();
 }
 
-// Build an offensive & defensive rating from a bonus-set.
-// Offense: your scoring power. Attack + Lethality + skill damage, plus the
-//   enemy's defense/health you've stripped away (those help you score).
-// Defense: your goal prevention. Defense + Health + damage-taken reduction,
-//   plus the enemy attack/lethality you've suppressed.
+// ── TACTICS ──
+// Skill-type groupings for positional synergy
+const OFFENSIVE_TYPES = ['attack','lethality','skill_dmg','enemy_def_down','enemy_dmg_taken_up'];
+const DEFENSIVE_TYPES = ['defense','health','dmg_taken_down','enemy_atk_down','enemy_leth_down'];
+const ATTACKER_SLOTS  = ['fwd1','fwd2'];
+const DEFENDER_SLOTS  = ['gk','def1','def2','def3','def4'];
+const POSITION_MULT   = 1.5;  // hidden synergy bonus when a skill matches its position
+
+// Build offense & defense ratings from the actual lineup, applying the hidden
+// positional synergy: offensive skills in ST slots and defensive skills in
+// defender slots (GK/LB/CB/RB) are multiplied by POSITION_MULT. Midfield neutral.
+function ratingsFromLineup() {
+  let offense = 0, defense = 0;
+  SLOTS.forEach(slotId => {
+    const heroId = lineup[slotId];
+    if (!heroId) return;
+    const hero = HEROES.find(h => h.id === heroId);
+    const isCaptain = captainSlot === slotId;
+    const skills = isCaptain ? hero.expeditionSkills : [hero.expeditionSkills[0]];
+    const inAttack  = ATTACKER_SLOTS.includes(slotId);
+    const inDefense = DEFENDER_SLOTS.includes(slotId);
+    skills.forEach(sk => (sk.bonuses||[]).forEach(b => {
+      let v = b.val;
+      if (OFFENSIVE_TYPES.includes(b.type)) {
+        offense += inAttack ? v * POSITION_MULT : v;
+      } else if (DEFENSIVE_TYPES.includes(b.type)) {
+        defense += inDefense ? v * POSITION_MULT : v;
+      }
+    }));
+  });
+  return { offense: Math.round(offense), defense: Math.round(defense) };
+}
+
+// Plain rating from a flat bonus-set (used for the CPU baseline, which has no positions).
 function ratingsFrom(b) {
   const offense = (b.attack||0) + (b.lethality||0) + (b.skill_dmg||0)
                 + (b.enemy_def_down||0) + (b.enemy_dmg_taken_up||0);
@@ -1528,10 +1569,40 @@ function ratingsFrom(b) {
   return { offense, defense };
 }
 
+// Manager tactic, derived from the manager hero's class.
+// Returns the modified ratings plus a label and swing multiplier.
+function applyManagerTactic(ratings) {
+  const mgrId = lineup['mgr'];
+  let offense = ratings.offense, defense = ratings.defense, swingMult = 1, tactic = null, tacticDesc = null;
+  if (mgrId) {
+    const mgr = HEROES.find(h => h.id === mgrId);
+    if (mgr.class === 'archer') {
+      offense = Math.round(offense * 1.15);
+      tactic = 'Attacking'; tacticDesc = '+15% Offense';
+    } else if (mgr.class === 'infantry') {
+      defense = Math.round(defense * 1.15);
+      tactic = 'Defensive'; tacticDesc = '+15% Defense';
+    } else { // cavalry
+      swingMult = 1.25;
+      tactic = 'Counter-Attack'; tacticDesc = 'higher variance';
+    }
+  }
+  return { offense, defense, swingMult, tactic, tacticDesc };
+}
+
+// Public helper for UI: the manager's tactic label (or null).
+function managerTactic() {
+  const mgrId = lineup['mgr'];
+  if (!mgrId) return null;
+  const mgr = HEROES.find(h => h.id === mgrId);
+  if (mgr.class === 'archer')   return { name:'Attacking',      icon:'🏹', desc:'+15% team Offense' };
+  if (mgr.class === 'infantry') return { name:'Defensive',      icon:'⚔️', desc:'+15% team Defense' };
+  return { name:'Counter-Attack', icon:'🐎', desc:'+25% chance-skill swing' };
+}
+
 // Count active probability skills → each adds a small random swing factor.
 function probSwing() {
   const n = collectProbabilitySkills().length;
-  // Each chance-based skill can swing the match ±, capped so it stays fun not chaotic
   let swing = 0;
   for (let i = 0; i < n; i++) {
     swing += (Math.random() - 0.45) * 6; // slight positive lean, ~±3 per skill
@@ -1542,11 +1613,13 @@ function probSwing() {
 // Convert an offense-vs-defense matchup into an expected goals number,
 // then roll actual goals around it.
 function rollGoals(offense, oppDefense, swing) {
-  // Base expected goals: midpoint ~1.4, scaled by how much offense beats defense
-  const edge = (offense - oppDefense) / 40;       // every 40 net pts ≈ +1 xG
-  let xg = 1.4 + edge + swing / 30;
-  if (xg < 0.15) xg = 0.15;
-  // Poisson-ish draw using the xG as mean
+  const edge = (offense - oppDefense) / 55;   // every 55 net pts ≈ +1 xG
+  let xg = 1.05 + edge + swing / 35;
+  // Offense gate: a team with little attacking output can't score much,
+  // no matter how weak the opponent's defense is.
+  const ceiling = offense / 70 + 0.1;
+  if (xg > ceiling) xg = ceiling;
+  if (xg < 0.03) xg = 0.03;
   return poissonSample(xg);
 }
 
@@ -1559,23 +1632,27 @@ function poissonSample(lambda) {
 }
 
 function simulateMatch() {
-  const playerBonus = computeBonuses();
-  const pr = ratingsFrom(playerBonus);
-  const cr = ratingsFrom(CPU_BASELINE);
+  // Player rating now reflects positional synergy + manager tactic
+  const base = ratingsFromLineup();
+  const pr   = applyManagerTactic(base);
+  const cr   = ratingsFrom(CPU_BASELINE);
 
-  // Two independent swings from the player's chance-based skills (one for each half-ish)
-  const swingA = probSwing();
-  const swingB = probSwing();
+  // Two independent swings from the player's chance-based skills, scaled by tactic
+  const swingA = probSwing() * pr.swingMult;
+  const swingB = probSwing() * pr.swingMult;
 
   let playerScore = rollGoals(pr.offense, cr.defense, swingA);
-  let cpuScore    = rollGoals(cr.offense, pr.defense, -swingB * 0.7); // player's luck slightly dampens CPU too
+  let cpuScore    = rollGoals(cr.offense, pr.defense, -swingB * 0.7);
 
-  // Render the result
   const won  = playerScore > cpuScore;
   const draw = playerScore === cpuScore;
   const verdict = won ? 'WIN' : draw ? 'DRAW' : 'LOSS';
   const color   = won ? '#5dcc88' : draw ? '#c9a84c' : '#e05d5d';
   const emoji   = won ? '🏆' : draw ? '🤝' : '😞';
+
+  const tacticLine = pr.tactic
+    ? `<div style="font-size:10px;color:var(--gold);margin-top:6px;letter-spacing:0.05em;">📋 Tactic: ${pr.tactic} <span style="color:#777;">(${pr.tacticDesc})</span></div>`
+    : `<div style="font-size:10px;color:#666;margin-top:6px;">No manager — no tactic active</div>`;
 
   const el = document.getElementById('match-result-content');
   el.innerHTML = `
@@ -1587,12 +1664,13 @@ function simulateMatch() {
       <div style="margin-top:8px;font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:${color};letter-spacing:0.1em;">
         ${emoji} ${verdict}
       </div>
-      <div style="font-size:11px;color:#888;margin-top:4px;">Your FC vs. Fes FC 🎩</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">Your FC vs. Rival FC</div>
+      ${tacticLine}
     </div>
     <div style="display:flex;gap:8px;font-size:10px;color:#aaa;justify-content:center;margin-top:4px;">
-      <span title="Your scoring power">⚔️ Off ${pr.offense}</span>
+      <span title="Your scoring power (incl. positioning &amp; tactic)">⚔️ Off ${pr.offense}</span>
       <span style="color:#444;">|</span>
-      <span title="Your goal prevention">🛡️ Def ${pr.defense}</span>
+      <span title="Your goal prevention (incl. positioning &amp; tactic)">🛡️ Def ${pr.defense}</span>
     </div>
     <button class="btn" style="margin-top:12px;" onclick="rematch()">🔁 Replay Match (same teams)</button>
   `;
@@ -1637,15 +1715,24 @@ function renderProbSkills() {
   const el = document.getElementById('draft-prob-skills');
   if (!el) return;
   const probs = collectProbabilitySkills();
-  if (!probs.length) { el.innerHTML = ''; return; }
-  el.innerHTML = `
-    <hr class="divider">
-    <div style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">🎲 Chance-Based Skills (don't stack)</div>
-    ${probs.map(p => `<div style="font-size:10px;color:#aaa;margin-bottom:5px;line-height:1.4;">
-      <span style="color:var(--cream);font-weight:600;">${p.name}</span>
-      <span style="color:#666;">· ${p.hero}</span><br>
-      <span style="color:#777;font-size:9px;">${p.desc}</span>
-    </div>`).join('')}`;
+  const tac = managerTactic();
+
+  let html = '';
+  if (tac) {
+    html += `<hr class="divider">
+      <div style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">📋 Manager Tactic</div>
+      <div style="font-size:11px;color:var(--cream);margin-bottom:6px;">${tac.icon} <strong>${tac.name}</strong> <span style="color:#777;">— ${tac.desc}</span></div>`;
+  }
+  if (probs.length) {
+    html += `<hr class="divider">
+      <div style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">🎲 Chance-Based Skills (don't stack)</div>
+      ${probs.map(p => `<div style="font-size:10px;color:#aaa;margin-bottom:5px;line-height:1.4;">
+        <span style="color:var(--cream);font-weight:600;">${p.name}</span>
+        <span style="color:#666;">· ${p.hero}</span><br>
+        <span style="color:#777;font-size:9px;">${p.desc}</span>
+      </div>`).join('')}`;
+  }
+  el.innerHTML = html;
 }
 
 // Init draft pool on load
