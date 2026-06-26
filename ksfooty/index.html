@@ -548,6 +548,7 @@
       <button class="btn secondary" onclick="setCaptain()">👑 Toggle Captain on Selected</button>
       <button class="btn secondary" onclick="clearSlot()">✕ Clear Selected Slot</button>
       <hr class="divider">
+      <button class="btn" onclick="openExport()">📋 Export Lineup</button>
       <button class="btn danger" onclick="resetAll()">⟳ Reset Entire Lineup</button>
     </div>
   </div>
@@ -995,6 +996,66 @@ function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
 renderAll();
+
+// ── EXPORT ──
+function buildExportText() {
+  const posLabels = {
+    fwd1:'ST', fwd2:'ST',
+    mid1:'LM', mid2:'CM', mid3:'CM', mid4:'RM',
+    def1:'LB', def2:'CB', def3:'CB', def4:'RB',
+    gk:'GK', mgr:'MGR'
+  };
+  const order = ['fwd1','fwd2','mid1','mid2','mid3','mid4','def1','def2','def3','def4','gk','mgr'];
+  return order
+    .filter(s => lineup[s])
+    .map(s => {
+      const hero = HEROES.find(h => h.id === lineup[s]);
+      const cap = captainSlot === s ? ' C' : '';
+      return posLabels[s] + ' ' + hero.name + cap;
+    })
+    .join('\n');
+}
+
+function openExport() {
+  document.getElementById('export-text').value = buildExportText();
+  document.getElementById('copy-btn').textContent = 'Copy to Clipboard';
+  document.getElementById('export-modal').classList.add('open');
+}
+function closeExport() {
+  document.getElementById('export-modal').classList.remove('open');
+}
+function copyExport() {
+  const ta = document.getElementById('export-text');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
+  }).catch(() => {
+    document.execCommand('copy');
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
+  });
+}
 </script>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>📋 Export Lineup</h3>
+      <button class="modal-close" onclick="closeExport()">&#x2715;</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <textarea id="export-text" readonly
+        style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;
+               color:var(--cream);font-family:'Courier New',monospace;font-size:12px;line-height:1.75;
+               padding:12px;resize:none;outline:none;height:220px;width:100%;white-space:pre;"></textarea>
+      <button class="btn" id="copy-btn" onclick="copyExport()">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
