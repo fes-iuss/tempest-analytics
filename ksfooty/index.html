@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingshot FC — Lineup Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --pitch: #2d6a3f;
+    --pitch-dark: #1e4f2e;
+    --pitch-line: rgba(255,255,255,0.18);
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --cream: #f5f0e8;
+    --ink: #1a1a2e;
+    --panel: rgba(15,25,40,0.92);
+    --border: rgba(201,168,76,0.35);
+    --shadow: 0 4px 24px rgba(0,0,0,0.5);
+    --rarity-legendary: #c9a84c;
+    --rarity-epic: #9b59b6;
+    --rarity-rare: #3498db;
+    --class-archer: #e8a55d;
+    --class-infantry: #5d8ee8;
+    --class-cavalry: #5de8a5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0f1a;
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 16px 12px;
+    background: linear-gradient(180deg, #0a0f1a 60%, transparent);
+    position: relative;
+    z-index: 10;
+  }
+  header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(22px, 4vw, 38px);
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-shadow: 0 2px 12px rgba(201,168,76,0.4);
+  }
+  header p { color: #aaa; font-size: 13px; margin-top: 4px; }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    padding: 0 16px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .pitch-wrap {
+    position: relative;
+    background: var(--pitch);
+    border-radius: 12px;
+    border: 2px solid var(--pitch-line);
+    overflow: hidden;
+    aspect-ratio: 7/10;
+    box-shadow: var(--shadow);
+  }
+  .pitch-lines { position: absolute; inset: 0; pointer-events: none; }
+  .pitch-lines::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--pitch-line);
+  }
+  .circle-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 8px; height: 8px;
+    background: var(--pitch-line);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .penalty-top, .penalty-bottom {
+    position: absolute;
+    left: 50%;
+    width: 40%;
+    height: 14%;
+    border: 1px solid var(--pitch-line);
+    transform: translateX(-50%);
+  }
+  .penalty-top { top: 0; border-top: none; border-radius: 0 0 6px 6px; }
+  .penalty-bottom { bottom: 0; border-bottom: none; border-radius: 6px 6px 0 0; }
+  .formation-label {
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.15em;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .slot-row {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+  .row-gk  { top: 88%; }
+  .row-def  { top: 68%; }
+  .row-mid  { top: 45%; }
+  .row-fwd  { top: 22%; }
+
+  .slot {
+    width: 72px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    position: relative;
+  }
+  .slot:hover { transform: scale(1.06); }
+  .slot:hover .slot-inner { border-color: var(--gold); }
+
+  .slot-inner {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 4px 6px;
+    text-align: center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .slot.captain .slot-inner {
+    border-color: var(--gold);
+    box-shadow: 0 0 10px rgba(201,168,76,0.35);
+  }
+
+  .slot-pos {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Portrait image */
+  .slot-portrait {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    margin: 1px auto 3px;
+    border: 2px solid transparent;
+    display: block;
+    background: rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .slot-portrait.archer   { border-color: var(--class-archer); }
+  .slot-portrait.infantry { border-color: var(--class-infantry); }
+  .slot-portrait.cavalry  { border-color: var(--class-cavalry); }
+
+  /* Fallback emoji shown when image fails */
+  .slot-emoji-fallback {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    margin: 1px auto 3px;
+    border: 2px solid transparent;
+    display: none; /* hidden by default, shown via JS on error */
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .slot-emoji-fallback.archer   { border-color: var(--class-archer); }
+  .slot-emoji-fallback.infantry { border-color: var(--class-infantry); }
+  .slot-emoji-fallback.cavalry  { border-color: var(--class-cavalry); }
+
+  .slot-name {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.2;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .slot-skill-tag {
+    font-size: 7.5px;
+    color: #999;
+    margin-top: 2px;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .empty-slot-icon { font-size: 18px; color: rgba(255,255,255,0.15); margin-bottom: 2px; }
+  .empty-slot-label { font-size: 8px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .captain-badge {
+    position: absolute;
+    top: -5px; right: -5px;
+    background: var(--gold);
+    color: #1a1a2e;
+    font-size: 7px;
+    font-weight: 800;
+    border-radius: 4px;
+    padding: 1px 3px;
+    letter-spacing: 0.05em;
+  }
+  .gen-badge {
+    position: absolute;
+    top: -5px; left: -5px;
+    font-size: 7px;
+    font-weight: 700;
+    border-radius: 4px;
+    padding: 1px 3px;
+  }
+  .rarity-legendary .gen-badge { background: var(--rarity-legendary); color: #1a1a2e; }
+  .rarity-epic      .gen-badge { background: var(--rarity-epic); color: #fff; }
+  .rarity-rare      .gen-badge { background: var(--rarity-rare); color: #fff; }
+
+  .manager-section {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 0;
+    position: relative;
+  }
+  .manager-section::before {
+    content: 'MANAGER';
+    position: absolute;
+    top: -2px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    font-weight: 700;
+  }
+  .slot.manager { margin-top: 18px; }
+
+  .right-panel { display: flex; flex-direction: column; gap: 12px; }
+
+  .panel-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    backdrop-filter: blur(8px);
+  }
+  .panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .stat-label { font-size: 10px; color: #aaa; width: 80px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+  .stat-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .stat-bar.attack    { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  .stat-bar.defense   { background: linear-gradient(90deg, #2980b9, #3498db); }
+  .stat-bar.lethality { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
+  .stat-bar.health    { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+  .stat-val { font-size: 10px; font-weight: 600; color: var(--cream); width: 38px; text-align: right; flex-shrink: 0; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #0f1929;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 90vw;
+    max-width: 580px;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  }
+  .modal-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-header h3 { font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold); letter-spacing: 0.1em; }
+  .modal-close { background: none; border: none; color: #888; cursor: pointer; font-size: 18px; }
+  .modal-close:hover { color: var(--cream); }
+  .modal-filters {
+    padding: 8px 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    color: #bbb;
+    font-size: 11px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1a1a2e;
+    font-weight: 600;
+  }
+  .modal-search {
+    margin: 8px 16px 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: var(--cream);
+    font-size: 12px;
+    padding: 6px 10px;
+    width: calc(100% - 32px);
+    outline: none;
+  }
+  .modal-search:focus { border-color: var(--gold); }
+
+  .hero-grid {
+    overflow-y: auto;
+    padding: 10px 16px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+    flex: 1;
+  }
+  .hero-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px 6px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    position: relative;
+  }
+  .hero-card:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    transform: translateY(-2px);
+  }
+  .hero-card.used { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* Portrait in picker */
+  .hero-card-portrait {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    margin: 0 auto 5px;
+    display: block;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+  }
+  .hero-card-portrait.archer   { border-color: var(--class-archer); }
+  .hero-card-portrait.infantry { border-color: var(--class-infantry); }
+  .hero-card-portrait.cavalry  { border-color: var(--class-cavalry); }
+  .hero-card-emoji-fallback {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    margin: 0 auto 5px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+  }
+  .hero-card-emoji-fallback.archer   { border-color: var(--class-archer); }
+  .hero-card-emoji-fallback.infantry { border-color: var(--class-infantry); }
+  .hero-card-emoji-fallback.cavalry  { border-color: var(--class-cavalry); }
+
+  .hero-card .hero-name { font-size: 10px; font-weight: 600; color: var(--cream); margin-bottom: 2px; }
+  .hero-card .hero-class { font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .hero-card .hero-class.archer   { color: var(--class-archer); }
+  .hero-card .hero-class.infantry { color: var(--class-infantry); }
+  .hero-card .hero-class.cavalry  { color: var(--class-cavalry); }
+  .hero-card .hero-rarity {
+    position: absolute; top: 4px; right: 4px;
+    font-size: 7px; font-weight: 700; border-radius: 3px; padding: 1px 4px;
+  }
+  .hero-card .hero-rarity.legendary { background: var(--rarity-legendary); color: #1a1a2e; }
+  .hero-card .hero-rarity.epic      { background: var(--rarity-epic); color: #fff; }
+  .hero-card .hero-rarity.rare      { background: var(--rarity-rare); color: #fff; }
+  .hero-card .hero-skill { font-size: 8.5px; color: #777; margin-top: 3px; line-height: 1.3; }
+
+  /* Detail panel */
+  .hero-detail { font-size: 11px; color: #aaa; line-height: 1.5; }
+  .hero-detail .hd-portrait {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    float: left;
+    margin: 0 10px 8px 0;
+    border: 2px solid var(--border);
+  }
+  .hero-detail .hd-name { font-family: 'Cinzel', serif; font-size: 14px; color: var(--cream); margin-bottom: 1px; }
+  .hero-detail .hd-meta { color: #777; font-size: 10px; margin-bottom: 6px; }
+  .skill-entry { margin-bottom: 6px; clear: left; }
+  .skill-entry .sk-name { font-weight: 600; color: var(--cream); font-size: 11px; }
+  .skill-entry .sk-desc { color: #888; font-size: 10px; margin-top: 1px; }
+  .skill-entry .sk-badge {
+    display: inline-block;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 8px; font-weight: 600;
+    border-radius: 3px; padding: 0 4px; margin-top: 2px; letter-spacing: 0.05em;
+  }
+  .skill-entry .sk-badge.captain { background: rgba(201,168,76,0.3); }
+
+  .btn {
+    background: var(--gold);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 7px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .btn:hover { background: var(--gold-light); }
+  .btn.secondary {
+    background: rgba(255,255,255,0.07);
+    color: #bbb;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .btn.secondary:hover { background: rgba(255,255,255,0.12); color: var(--cream); }
+  .btn.danger {
+    background: rgba(220,60,60,0.15);
+    color: #e05050;
+    border: 1px solid rgba(220,60,60,0.3);
+  }
+  .btn.danger:hover { background: rgba(220,60,60,0.25); }
+
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-label { font-size: 10px; color: #888; margin-top: 4px; text-align: right; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+  @media (max-width: 768px) {
+    .main-layout { grid-template-columns: 1fr; padding: 0 8px 24px; }
+    .right-panel { order: -1; }
+    .slot { width: 60px; }
+    .slot-inner { min-height: 78px; }
+    .slot-portrait { width: 34px; height: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔️ KINGSHOT FC</h1>
+  <p>4-4-2 Expedition Lineup Builder · Click any slot to assign a hero</p>
+</header>
+
+<div class="main-layout">
+  <div>
+    <div class="pitch-wrap" id="pitch">
+      <div class="pitch-lines"></div>
+      <div class="circle-center"></div>
+      <div class="penalty-top"></div>
+      <div class="penalty-bottom"></div>
+      <div class="formation-label">4 – 4 – 2</div>
+      <div class="slot-row row-fwd">
+        <div class="slot" data-slot="fwd1" data-pos="ST" onclick="openPicker('fwd1')"></div>
+        <div class="slot" data-slot="fwd2" data-pos="ST" onclick="openPicker('fwd2')"></div>
+      </div>
+      <div class="slot-row row-mid">
+        <div class="slot" data-slot="mid1" data-pos="LM" onclick="openPicker('mid1')"></div>
+        <div class="slot" data-slot="mid2" data-pos="CM" onclick="openPicker('mid2')"></div>
+        <div class="slot" data-slot="mid3" data-pos="CM" onclick="openPicker('mid3')"></div>
+        <div class="slot" data-slot="mid4" data-pos="RM" onclick="openPicker('mid4')"></div>
+      </div>
+      <div class="slot-row row-def">
+        <div class="slot" data-slot="def1" data-pos="LB" onclick="openPicker('def1')"></div>
+        <div class="slot" data-slot="def2" data-pos="CB" onclick="openPicker('def2')"></div>
+        <div class="slot" data-slot="def3" data-pos="CB" onclick="openPicker('def3')"></div>
+        <div class="slot" data-slot="def4" data-pos="RB" onclick="openPicker('def4')"></div>
+      </div>
+      <div class="slot-row row-gk">
+        <div class="slot" data-slot="gk" data-pos="GK" onclick="openPicker('gk')"></div>
+      </div>
+    </div>
+    <div class="manager-section">
+      <div class="slot manager" data-slot="mgr" data-pos="MGR" onclick="openPicker('mgr')"></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-card">
+      <div class="panel-title">⚡ Team Expedition Bonuses</div>
+      <div id="bonuses"><div style="color:#555;font-size:11px;text-align:center;padding:8px 0;">Pick heroes to see bonuses</div></div>
+      <div class="progress-bar"><div class="progress-fill" id="lineup-progress" style="width:0%"></div></div>
+      <div class="progress-label" id="lineup-count">0 / 12 slots filled</div>
+    </div>
+    <div class="panel-card" id="detail-panel">
+      <div class="panel-title">🎖️ Hero Detail</div>
+      <div id="hero-detail-content"><div style="color:#555;font-size:11px;text-align:center;padding:8px 0;">Select a slot to see hero details</div></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title">🏆 Controls</div>
+      <button class="btn secondary" onclick="setCaptain()">👑 Toggle Captain on Selected</button>
+      <button class="btn secondary" onclick="clearSlot()">✕ Clear Selected Slot</button>
+      <hr class="divider">
+      <button class="btn danger" onclick="resetAll()">⟳ Reset Entire Lineup</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Pick a Hero</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-filters">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" data-filter="archer" onclick="setFilter('archer',this)">🏹 Archer</button>
+      <button class="filter-btn" data-filter="infantry" onclick="setFilter('infantry',this)">⚔️ Infantry</button>
+      <button class="filter-btn" data-filter="cavalry" onclick="setFilter('cavalry',this)">🐎 Cavalry</button>
+      <button class="filter-btn" data-filter="legendary" onclick="setFilter('legendary',this)">★ Legendary</button>
+      <button class="filter-btn" data-filter="epic" onclick="setFilter('epic',this)">◆ Epic</button>
+    </div>
+    <input class="modal-search" id="modal-search" type="text" placeholder="Search hero name…" oninput="renderHeroGrid()">
+    <div class="hero-grid" id="hero-grid"></div>
+  </div>
+</div>
+
+<script>
+// ── IMAGE URL HELPER ──
+// Local files, all .webp, same folder as the HTML.
+function heroImgUrl(id) {
+  return `kingshot-hero-${id}-avatar.webp`;
+}
+
+// ── HERO DATA ──
+const HEROES = [
+  // GEN 7
+  { id:'ava', name:'Ava', class:'cavalry', rarity:'legendary', gen:'G7', emoji:'🎨',
+    expeditionSkills:[
+      {name:'Dissolution',desc:'Reduces total Enemy Squad\'s Defense by 25%.',bonuses:[{type:'enemy_def_down',val:25}]},
+      {name:'Chiaroscuro',desc:'All enemy soldiers receive 50% increased damage for 2 turns every 4 turns.',bonuses:[],random:true},
+      {name:'Light and Cold',desc:'Increases soldiers\' Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+    ]},
+  { id:'charles', name:'Charles', class:'infantry', rarity:'legendary', gen:'G7', emoji:'🤖',
+    expeditionSkills:[
+      {name:'Intimidation',desc:'Reduces enemy Squad\'s Total Lethality by 20%.',bonuses:[{type:'enemy_leth_down',val:20}]},
+      {name:'Iron Bodies',desc:'Reduces Squad\'s Damage Taken by 20%.',bonuses:[{type:'dmg_taken_down',val:20}]},
+      {name:'Great Justice',desc:'Increases Squad\'s total Health by 25%.',bonuses:[{type:'health',val:25}]},
+    ]},
+  { id:'wee-and-woo', name:'Wee & Woo', class:'archer', rarity:'legendary', gen:'G7', emoji:'💥',
+    expeditionSkills:[
+      {name:'Artillerymen',desc:'Increases Squad\'s total Attack by 15% and total Lethality by 10%.',bonuses:[{type:'attack',val:15},{type:'lethality',val:10}]},
+      {name:'Chain Shelling',desc:'Increases Squad\'s Damage Dealt to Archer by 30% and to Infantry by 25%.',bonuses:[],special:true},
+      {name:'Boom Boom',desc:'50% chance of dealing 50% extra damage.',bonuses:[],random:true},
+    ]},
+  // GEN 6
+  { id:'triton', name:'Triton', class:'infantry', rarity:'legendary', gen:'G6', emoji:'🌊',
+    expeditionSkills:[
+      {name:'Command of Power',desc:'Increases total Squads\' Defense by 25%.',bonuses:[{type:'defense',val:25}]},
+      {name:'Warfare of Power',desc:'Increases total Squads\' skill damage dealt by 30%.',bonuses:[{type:'skill_dmg',val:30}]},
+      {name:'Oath of Power',desc:'Infantry Health +20%, Cavalry & Archer Health +30%.',bonuses:[{type:'health',val:25}]},
+    ]},
+  { id:'sophia', name:'Sophia', class:'cavalry', rarity:'legendary', gen:'G6', emoji:'🌹',
+    expeditionSkills:[
+      {name:'Arcane Pact',desc:'40% chance of reducing all squad damage received by 50% every turn.',bonuses:[],random:true},
+      {name:'Terror – Deathblow',desc:'Terrified enemies receive 200% increased Cavalry damage.',bonuses:[],special:true},
+      {name:'Terror – Annihilation',desc:'All Squads deal 75% increased damage to Terrified targets.',bonuses:[],special:true},
+    ]},
+  { id:'yang', name:'Yang', class:'archer', rarity:'legendary', gen:'G6', emoji:'🧊',
+    expeditionSkills:[
+      {name:'Avalanche',desc:'All Squads deal an extra strike every 4 turns for 100% damage.',bonuses:[],special:true},
+      {name:'Ice Zone',desc:'Yang\'s Archers have a 40% chance of dealing 100% extra damage.',bonuses:[],random:true},
+      {name:'Ambush',desc:'All Squads have a 40% chance of dealing increased damage every turn.',bonuses:[],random:true},
+    ]},
+  // GEN 5
+  { id:'long-fei', name:'Long Fei', class:'infantry', rarity:'legendary', gen:'G5', emoji:'⚗️',
+    expeditionSkills:[
+      {name:'Mighty Paragon',desc:'40% chance of reducing damage taken by all squads by 50%.',bonuses:[],random:true},
+      {name:'Celestial Sustenance',desc:'Increases total Squads\' Defense by 25%.',bonuses:[{type:'defense',val:25}]},
+      {name:'Art of War',desc:'All squads\' attacks have a 25% chance of dealing 200% damage.',bonuses:[],random:true},
+    ]},
+  { id:'thrud', name:'Thrud', class:'cavalry', rarity:'legendary', gen:'G5', emoji:'🪓',
+    expeditionSkills:[
+      {name:'Reckless Charge',desc:'Cavalry has a 20% chance of dealing 100% extra damage.',bonuses:[],random:true},
+      {name:'Battle Hunger',desc:'Reduces Infantry & Archer Damage Taken by 15%, increases Damage Dealt by 15%.',bonuses:[{type:'dmg_taken_down',val:15},{type:'attack',val:15}]},
+      {name:'Ancestral Guidance',desc:'Every 4 Cavalry attacks: +25% damage dealt & −25% damage taken for 2 turns.',bonuses:[],special:true},
+    ]},
+  { id:'vivian', name:'Vivian', class:'archer', rarity:'legendary', gen:'G5', emoji:'🪙',
+    expeditionSkills:[
+      {name:'Crouching Tiger',desc:'All squads\' attacks increase enemy damage taken by 25%.',bonuses:[{type:'enemy_dmg_taken_up',val:25}]},
+      {name:'Focus Fire',desc:'After every 4 attacks: 100% extra damage, target takes 15% more damage.',bonuses:[],special:true},
+      {name:'Trap of Greed',desc:'60% extra damage to all enemies on every 4th attack.',bonuses:[],special:true},
+    ]},
+  // GEN 4
+  { id:'margot', name:'Margot', class:'cavalry', rarity:'legendary', gen:'G4', emoji:'🗡️',
+    expeditionSkills:[
+      {name:'Warbringer',desc:'Increases total Squads\' Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+      {name:'Subterfuge',desc:'All Squads have a 20% chance of dodging Normal Attacks.',bonuses:[],random:true},
+      {name:'Sleight Hand',desc:'Cavalry have a 25% chance of performing an extra attack for 200% damage.',bonuses:[],random:true},
+    ]},
+  { id:'rosa', name:'Rosa', class:'archer', rarity:'legendary', gen:'G4', emoji:'💃',
+    expeditionSkills:[
+      {name:'Chaos Gambit',desc:'40% chance of increasing all Squads\' Damage Dealt by 50%.',bonuses:[],random:true},
+      {name:'Rose of War',desc:'Reduces damage dealt by 20% for all enemy squads.',bonuses:[{type:'enemy_atk_down',val:20}]},
+      {name:'Golden Rhythm',desc:'Increases Archers\' total Attack by 30%.',bonuses:[{type:'attack',val:30}]},
+    ]},
+  { id:'alcar', name:'Alcar', class:'infantry', rarity:'legendary', gen:'G4', emoji:'🛡️',
+    expeditionSkills:[
+      {name:'Rescuing Hands',desc:'Reduces Infantry & Archer Damage Taken by 70% every 5 turns for 2 turns.',bonuses:[],special:true},
+      {name:'Praetorian Will',desc:'Infantry Damage Dealt +100%, Cavalry & Archer +10%.',bonuses:[{type:'attack',val:20}]},
+      {name:'Carpe Diem',desc:'Infantry Damage +60% per attack, enemy takes +25% damage for 1 turn.',bonuses:[],special:true},
+    ]},
+  // GEN 3
+  { id:'eric', name:'Eric', class:'infantry', rarity:'legendary', gen:'G3', emoji:'⚒️',
+    expeditionSkills:[
+      {name:'Holy Warrior',desc:'Reduces the total Enemy Squads\' Attack by 20%.',bonuses:[{type:'enemy_atk_down',val:20}]},
+      {name:'Conviction',desc:'Reduces Squads\' Damage Taken by 20%.',bonuses:[{type:'dmg_taken_down',val:20}]},
+      {name:'Exhortation',desc:'Increases total Squads\' Health by 25%.',bonuses:[{type:'health',val:25}]},
+    ]},
+  { id:'petra', name:'Petra', class:'cavalry', rarity:'legendary', gen:'G3', emoji:'🃏',
+    expeditionSkills:[
+      {name:'Evil Eye',desc:'50% chance of cursing target, increasing their damage taken by 50%.',bonuses:[],random:true},
+      {name:'The Favor',desc:'50% chance of increasing Squads\' Attack by 50%.',bonuses:[],random:true},
+      {name:'The Shield',desc:'40% chance of reducing damage taken by 50% for all squads.',bonuses:[],random:true},
+    ]},
+  { id:'jaeger', name:'Jaeger', class:'archer', rarity:'legendary', gen:'G3', emoji:'🎵',
+    expeditionSkills:[
+      {name:'The Tempest',desc:'20% chance of increasing Squad\'s damage dealt by 40% for 3 turns.',bonuses:[],random:true},
+      {name:'The Resistance',desc:'20% chance of reducing total Enemy Squad\'s Lethality by 50% for 2 turns.',bonuses:[],random:true},
+      {name:'The Celebration',desc:'Increases total Squad\'s Health by 25%.',bonuses:[{type:'health',val:25}]},
+    ]},
+  // GEN 2
+  { id:'hilde', name:'Hilde', class:'cavalry', rarity:'legendary', gen:'G2', emoji:'✨',
+    expeditionSkills:[
+      {name:'Noble Path',desc:'Increases total squads\' Attack by 15% and Defense by 10%.',bonuses:[{type:'attack',val:15},{type:'defense',val:10}]},
+      {name:'Elixir of Strength',desc:'All squads\' attack has a 25% chance of dealing 200% damage.',bonuses:[],random:true},
+      {name:'Trial by Fire',desc:'40% chance of reducing damage taken by 50% for all squads.',bonuses:[],random:true},
+    ]},
+  { id:'marlin', name:'Marlin', class:'archer', rarity:'legendary', gen:'G2', emoji:'🍺',
+    expeditionSkills:[
+      {name:'Wild Card',desc:'40% chance of increasing damage dealt by 50% for all squads.',bonuses:[],random:true},
+      {name:'Rumhead',desc:'20% chance of reducing total Enemy Squads\' Lethality by 50% for 2 turns.',bonuses:[],random:true},
+      {name:'Dynamo',desc:'50% chance of increasing damage dealt by 50%.',bonuses:[],random:true},
+    ]},
+  { id:'zoe', name:'Zoe', class:'infantry', rarity:'legendary', gen:'G2', emoji:'⚡',
+    expeditionSkills:[
+      {name:'Sundering Wound',desc:'20% chance of inflicting Sunder, dealing 40% damage/turn for 3 turns.',bonuses:[],random:true},
+      {name:'Charisma',desc:'Increases total Squads\' Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+      {name:'Infinite Arsenal',desc:'50% chance of amplifying enemy squads\' damage taken by 50%.',bonuses:[],random:true},
+    ]},
+  // GEN 1
+  { id:'helga', name:'Helga', class:'infantry', rarity:'legendary', gen:'G1', emoji:'🦌',
+    expeditionSkills:[
+      {name:'Oath of Guardian',desc:'40% chance of reducing damage taken by 50% for all squads.',bonuses:[],random:true},
+      {name:'Echoes of Valhalla',desc:'Increases total Squads\' Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+      {name:'Nature\'s Balance',desc:'Increases total Squads\' Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+    ]},
+  { id:'amadeus', name:'Amadeus', class:'infantry', rarity:'legendary', gen:'G1', emoji:'⚔️',
+    expeditionSkills:[
+      {name:'Battle Ready',desc:'Increases total Squads\' Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+      {name:'Way of the Blade',desc:'Increases total Squads\' Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+      {name:'Unrighteous Strike',desc:'40% chance of increasing damage dealt by 50% for all squads.',bonuses:[],random:true},
+    ]},
+  { id:'jabel', name:'Jabel', class:'cavalry', rarity:'legendary', gen:'G1', emoji:'🏇',
+    expeditionSkills:[
+      {name:'Rally Flag',desc:'40% chance of reducing damage taken by 50% for all squads.',bonuses:[],random:true},
+      {name:'Hero\'s Domain',desc:'50% chance of dealing 50% more damage when attacking.',bonuses:[],random:true},
+      {name:'Youthful Rage',desc:'Increases damage dealt by 25% for all squads.',bonuses:[{type:'lethality',val:25}]},
+    ]},
+  { id:'saul', name:'Saul', class:'archer', rarity:'legendary', gen:'G1', emoji:'🐇',
+    expeditionSkills:[
+      {name:'Taskforce Training',desc:'Increases total Squads\' Defense by 10% and Health by 15%.',bonuses:[{type:'defense',val:10},{type:'health',val:15}]},
+      {name:'Resourceful',desc:'Increases Construction Speed by 15%, reduces Construction Cost by 15%.',bonuses:[],economy:true},
+      {name:'Positional Battler',desc:'Increases total Squads\' Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+    ]},
+  // EPIC
+  { id:'howard', name:'Howard', class:'infantry', rarity:'epic', gen:'Epic', emoji:'🛡',
+    expeditionSkills:[
+      {name:'Defenders\' Edge',desc:'Reduces damage taken by 20% for all troops.',bonuses:[{type:'dmg_taken_down',val:20}]},
+      {name:'Weaken',desc:'Reduces total Enemy Squads\' Attack by 20%.',bonuses:[{type:'enemy_atk_down',val:20}]},
+    ]},
+  { id:'gordon', name:'Gordon', class:'cavalry', rarity:'epic', gen:'Epic', emoji:'🍖',
+    expeditionSkills:[
+      {name:'Super Nutrients',desc:'Increases total Squads\' Health by 25%.',bonuses:[{type:'health',val:25}]},
+      {name:'Trash Talk',desc:'Increases total Squads\' Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+    ]},
+  { id:'quinn', name:'Quinn', class:'archer', rarity:'epic', gen:'Epic', emoji:'🏹',
+    expeditionSkills:[
+      {name:'Sixth Sense',desc:'Reduces damage taken by 20% for all troops.',bonuses:[{type:'dmg_taken_down',val:20}]},
+      {name:'Precision Shot',desc:'50% chance of dealing 50% more damage.',bonuses:[],random:true},
+    ]},
+  { id:'chenko', name:'Chenko', class:'cavalry', rarity:'epic', gen:'Epic', emoji:'🔫',
+    expeditionSkills:[
+      {name:'Stand of Arms',desc:'Increases total Squads\' Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+      {name:'Shield Wall',desc:'Reduces damage taken by 20% for all troops.',bonuses:[{type:'dmg_taken_down',val:20}]},
+    ]},
+  { id:'diana', name:'Diana', class:'archer', rarity:'epic', gen:'Epic', emoji:'🦌',
+    expeditionSkills:[
+      {name:'Iron Constitution',desc:'Reduces Governor Stamina Cost by 20%.',bonuses:[],economy:true},
+      {name:'Quick Paced',desc:'Increases March Speed by 100%.',bonuses:[],economy:true},
+    ]},
+  { id:'amane', name:'Amane', class:'archer', rarity:'epic', gen:'Epic', emoji:'🌸',
+    expeditionSkills:[
+      {name:'Tri-Phalanx',desc:'Increases all Squads\' total Attack by 25%.',bonuses:[{type:'attack',val:25}]},
+      {name:'Exorcism',desc:'Increases Infirmary Healing Speed by 50%.',bonuses:[],economy:true},
+    ]},
+  { id:'yeonwoo', name:'Yeonwoo', class:'archer', rarity:'epic', gen:'Epic', emoji:'🌺',
+    expeditionSkills:[
+      {name:'On Guard',desc:'Increases all Squads\' total Lethality by 25%.',bonuses:[{type:'lethality',val:25}]},
+      {name:'Well-Traveled',desc:'Increases Research Speed by 15%.',bonuses:[],economy:true},
+    ]},
+  { id:'fahd', name:'Fahd', class:'cavalry', rarity:'epic', gen:'Epic', emoji:'🦅',
+    expeditionSkills:[
+      {name:'Desert Eclipse',desc:'Reduces all Enemy Squads\' Damage Dealt by 20%.',bonuses:[{type:'enemy_atk_down',val:20}]},
+      {name:'Pathfinder',desc:'Increases Solo Hunting March Speed by 100%.',bonuses:[],economy:true},
+    ]},
+  // RARE
+  { id:'forrest', name:'Forrest', class:'infantry', rarity:'rare', gen:'Rare', emoji:'🪵',
+    expeditionSkills:[
+      {name:'Woodland Inheritor',desc:'Increases Town\'s Sawmill Output by 25%.',bonuses:[],economy:true},
+      {name:'Master Woodcutter',desc:'Increases Wood Gathering Speed by 25%.',bonuses:[],economy:true},
+    ]},
+  { id:'seth', name:'Seth', class:'infantry', rarity:'rare', gen:'Rare', emoji:'🔨',
+    expeditionSkills:[
+      {name:'Burnished Iron',desc:'Increases Town\'s Iron Output by 25%.',bonuses:[],economy:true},
+      {name:'Craftsmanship',desc:'Increases Iron Mining Speed by 25%.',bonuses:[],economy:true},
+    ]},
+  { id:'edwin', name:'Edwin', class:'cavalry', rarity:'rare', gen:'Rare', emoji:'💣',
+    expeditionSkills:[
+      {name:'Demolitions Expert',desc:'Increases Town\'s Quarry Output by 25%.',bonuses:[],economy:true},
+      {name:'Stone Mining',desc:'Increases Stone Mining Speed by 25%.',bonuses:[],economy:true},
+    ]},
+  { id:'olive', name:'Olive', class:'archer', rarity:'rare', gen:'Rare', emoji:'🍞',
+    expeditionSkills:[
+      {name:'Green Thumb',desc:'Increases Town\'s Mill Output by 25%.',bonuses:[],economy:true},
+      {name:'Forager\'s Luck',desc:'Increases Bread Gathering Speed by 25%.',bonuses:[],economy:true},
+    ]},
+];
+
+// ── STATE ──
+const lineup = {};
+let captainSlot = null;
+let activeSlot = null;
+let activeFilter = 'all';
+const SLOTS = ['gk','def1','def2','def3','def4','mid1','mid2','mid3','mid4','fwd1','fwd2','mgr'];
+
+// ── IMAGE ERROR HANDLER ──
+function onImgError(img) {
+  img.style.display = 'none';
+  const fallback = img.nextElementSibling;
+  if (fallback && fallback.classList.contains('slot-emoji-fallback')) {
+    fallback.style.display = 'flex';
+  }
+}
+function onCardImgError(img) {
+  img.style.display = 'none';
+  const fallback = img.nextElementSibling;
+  if (fallback && fallback.classList.contains('hero-card-emoji-fallback')) {
+    fallback.style.display = 'flex';
+  }
+}
+
+// ── RENDER SLOT ──
+function renderSlot(slotId) {
+  const el = document.querySelector(`[data-slot="${slotId}"]`);
+  if (!el) return;
+  const pos = el.dataset.pos;
+  const heroId = lineup[slotId];
+  const isCaptain = captainSlot === slotId;
+
+  el.className = 'slot' + (heroId ? ' filled' : '') + (isCaptain ? ' captain' : '') + (slotId === 'mgr' ? ' manager' : '');
+
+  if (!heroId) {
+    el.innerHTML = `<div class="slot-inner">
+      <div class="slot-pos">${pos}</div>
+      <div class="empty-slot-icon">+</div>
+      <div class="empty-slot-label">Empty</div>
+    </div>`;
+    return;
+  }
+
+  const hero = HEROES.find(h => h.id === heroId);
+  const skill = hero.expeditionSkills[0];
+  const skillShort = skill.name.length > 14 ? skill.name.substring(0,12)+'…' : skill.name;
+  const imgUrl = heroImgUrl(hero.id);
+
+  el.innerHTML = `<div class="slot-inner">
+    ${isCaptain ? '<div class="captain-badge">CAP</div>' : ''}
+    <div class="gen-badge rarity-${hero.rarity}">${hero.gen}</div>
+    <div class="slot-pos">${pos}</div>
+    <img class="slot-portrait ${hero.class}" src="${imgUrl}" alt="${hero.name}" onerror="onImgError(this)">
+    <div class="slot-emoji-fallback ${hero.class}">${hero.emoji}</div>
+    <div class="slot-name">${hero.name}</div>
+    <div class="slot-skill-tag">${skillShort}</div>
+  </div>`;
+}
+
+function renderAll() {
+  SLOTS.forEach(renderSlot);
+  renderBonuses();
+  renderProgress();
+  renderDetail();
+}
+
+// ── BONUSES ──
+function computeBonuses() {
+  const t = {attack:0,defense:0,lethality:0,health:0,dmg_taken_down:0,enemy_atk_down:0,enemy_def_down:0,enemy_leth_down:0,enemy_dmg_taken_up:0,skill_dmg:0};
+  SLOTS.forEach(slotId => {
+    const heroId = lineup[slotId];
+    if (!heroId) return;
+    const hero = HEROES.find(h => h.id === heroId);
+    const isCaptain = captainSlot === slotId;
+    const skills = isCaptain ? hero.expeditionSkills : [hero.expeditionSkills[0]];
+    skills.forEach(sk => (sk.bonuses||[]).forEach(b => { if (t.hasOwnProperty(b.type)) t[b.type] += b.val; }));
+  });
+  return t;
+}
+
+function renderBonuses() {
+  const t = computeBonuses();
+  const container = document.getElementById('bonuses');
+  const hasAny = Object.values(t).some(v => v > 0);
+  if (!hasAny) { container.innerHTML = `<div style="color:#555;font-size:11px;text-align:center;padding:8px 0;">Pick heroes to see bonuses</div>`; return; }
+  const rows = [
+    {key:'attack',label:'Attack',cls:'attack',icon:'⚔️'},
+    {key:'defense',label:'Defense',cls:'defense',icon:'🛡️'},
+    {key:'lethality',label:'Lethality',cls:'lethality',icon:'☠️'},
+    {key:'health',label:'Health',cls:'health',icon:'❤️'},
+    {key:'dmg_taken_down',label:'Dmg Taken ↓',cls:'defense',icon:'🛡'},
+    {key:'enemy_atk_down',label:'Enemy Atk ↓',cls:'attack',icon:'📉'},
+    {key:'enemy_def_down',label:'Enemy Def ↓',cls:'defense',icon:'📉'},
+    {key:'enemy_leth_down',label:'Enemy Leth ↓',cls:'lethality',icon:'📉'},
+    {key:'enemy_dmg_taken_up',label:'Enemy Dmg Taken ↑',cls:'attack',icon:'💥'},
+    {key:'skill_dmg',label:'Skill Damage',cls:'lethality',icon:'✨'},
+  ].filter(r => t[r.key] > 0);
+  const maxVal = Math.max(...rows.map(r=>t[r.key]),1);
+  container.innerHTML = rows.map(r=>`<div class="stat-row">
+    <span class="stat-label">${r.icon} ${r.label}</span>
+    <div class="stat-bar-wrap"><div class="stat-bar ${r.cls}" style="width:${Math.min(100,t[r.key]/maxVal*100)}%"></div></div>
+    <span class="stat-val">+${t[r.key]}%</span>
+  </div>`).join('');
+}
+
+function renderProgress() {
+  const filled = SLOTS.filter(s=>lineup[s]).length;
+  document.getElementById('lineup-progress').style.width = Math.round(filled/SLOTS.length*100)+'%';
+  document.getElementById('lineup-count').textContent = `${filled} / ${SLOTS.length} slots filled`;
+}
+
+function renderDetail() {
+  const container = document.getElementById('hero-detail-content');
+  if (!activeSlot || !lineup[activeSlot]) {
+    container.innerHTML = `<div style="color:#555;font-size:11px;text-align:center;padding:8px 0;">${activeSlot?'Empty slot — click to pick a hero.':'Click a slot to inspect.'}</div>`;
+    return;
+  }
+  const hero = HEROES.find(h=>h.id===lineup[activeSlot]);
+  const isCaptain = captainSlot === activeSlot;
+  const imgUrl = heroImgUrl(hero.id);
+  let html = `<div class="hero-detail">
+    <img class="hd-portrait" src="${imgUrl}" alt="${hero.name}" onerror="this.style.display='none'">
+    <div class="hd-name">${hero.name}</div>
+    <div class="hd-meta">${capitalize(hero.class)} · ${capitalize(hero.rarity)} · ${hero.gen}</div>
+    <div style="font-size:10px;color:${isCaptain?'#c9a84c':'#666'};margin-bottom:8px;">${isCaptain?'👑 Captain — all 3 expedition skills active':'Non-captain — Skill 1 only'}</div>`;
+  hero.expeditionSkills.forEach((sk,i) => {
+    const active = isCaptain || i===0;
+    html += `<div class="skill-entry" style="opacity:${active?1:0.35}">
+      <div class="sk-name">${sk.name} ${i===0?'<span class="sk-badge">Skill 1</span>':''} ${i>0&&isCaptain?'<span class="sk-badge captain">Captain</span>':''}</div>
+      <div class="sk-desc">${sk.desc}</div>
+      ${sk.random?'<div style="font-size:9px;color:#888;font-style:italic;margin-top:2px;">⚠ Probability-based — excluded from aggregation</div>':''}
+      ${sk.economy?'<div style="font-size:9px;color:#888;font-style:italic;margin-top:2px;">📦 Economy skill — no combat bonus</div>':''}
+    </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// ── PICKER ──
+function openPicker(slotId) {
+  activeSlot = slotId;
+  renderAll();
+  const pos = document.querySelector(`[data-slot="${slotId}"]`).dataset.pos;
+  document.getElementById('modal-title').textContent = `Pick Hero — ${pos} (${slotId.toUpperCase()})`;
+  document.getElementById('modal-search').value = '';
+  activeFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  renderHeroGrid();
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHeroGrid();
+}
+function renderHeroGrid() {
+  const search = document.getElementById('modal-search').value.toLowerCase();
+  const usedIds = new Set(Object.values(lineup));
+  const filtered = HEROES.filter(h => {
+    if (activeFilter !== 'all' && h.class !== activeFilter && h.rarity !== activeFilter) return false;
+    if (search && !h.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const grid = document.getElementById('hero-grid');
+  grid.innerHTML = filtered.map(hero => {
+    const used = usedIds.has(hero.id) && lineup[activeSlot] !== hero.id;
+    const sk = hero.expeditionSkills[0];
+    const skText = sk.economy ? '📦 Economy' : sk.random ? '⚠ Prob-based' : sk.name;
+    const imgUrl = heroImgUrl(hero.id);
+    return `<div class="hero-card ${used?'used':''}" onclick="pickHero('${hero.id}')">
+      <span class="hero-rarity ${hero.rarity}">${hero.gen}</span>
+      <img class="hero-card-portrait ${hero.class}" src="${imgUrl}" alt="${hero.name}" onerror="onCardImgError(this)">
+      <div class="hero-card-emoji-fallback ${hero.class}">${hero.emoji}</div>
+      <div class="hero-name">${hero.name}</div>
+      <div class="hero-class ${hero.class}">${capitalize(hero.class)}</div>
+      <div class="hero-skill">${skText}</div>
+    </div>`;
+  }).join('');
+}
+function pickHero(heroId) {
+  if (!activeSlot) return;
+  SLOTS.forEach(s => { if (lineup[s]===heroId && s!==activeSlot) delete lineup[s]; });
+  lineup[activeSlot] = heroId;
+  closeModal();
+  renderAll();
+}
+
+// ── CONTROLS ──
+function setCaptain() {
+  if (!activeSlot || !lineup[activeSlot]) { alert('Select a filled slot first.'); return; }
+  captainSlot = captainSlot === activeSlot ? null : activeSlot;
+  renderAll();
+}
+function clearSlot() {
+  if (!activeSlot) { alert('Click a slot first.'); return; }
+  delete lineup[activeSlot];
+  if (captainSlot === activeSlot) captainSlot = null;
+  renderAll();
+}
+function resetAll() {
+  if (!confirm('Reset entire lineup?')) return;
+  SLOTS.forEach(s => delete lineup[s]);
+  captainSlot = null; activeSlot = null;
+  renderAll();
+}
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+renderAll();
+</script>
+</body>
+</html>
