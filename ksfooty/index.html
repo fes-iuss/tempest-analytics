@@ -59,7 +59,11 @@
     padding: 0 16px 24px;
     max-width: 1200px;
     margin: 0 auto;
+    align-items: start;
   }
+  /* Pitch always column 1; both right panels share column 2 (only one shown at a time) */
+  .main-layout > div:first-child { grid-column: 1; grid-row: 1; }
+  .main-layout > .right-panel { grid-column: 2; grid-row: 1; }
 
   .pitch-wrap {
     position: relative;
@@ -485,19 +489,190 @@
 
   @media (max-width: 768px) {
     .main-layout { grid-template-columns: 1fr; padding: 0 8px 24px; }
-    .right-panel { order: -1; }
+    .main-layout > div:first-child { grid-column: 1; grid-row: 2; }
+    .main-layout > .right-panel { grid-column: 1; grid-row: 1; }
     .slot { width: 60px; }
     .slot-inner { min-height: 78px; }
     .slot-portrait { width: 34px; height: 34px; }
   }
+
+  /* ── MODE TABS ── */
+  .mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px 16px;
+  }
+  .mode-tab {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    color: #aaa;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 8px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1a1a2e;
+    font-weight: 700;
+  }
+  .mode-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: var(--cream); }
+
+  /* ── DRAFT PANEL (replaces right panel controls in draft mode) ── */
+  .draft-card {
+    background: linear-gradient(135deg, #0f1929 0%, #1a2540 100%);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 0 24px rgba(201,168,76,0.2);
+  }
+  .draft-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .drawn-hero-portrait {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    margin: 0 auto 8px;
+    display: block;
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 16px rgba(201,168,76,0.4);
+  }
+  .drawn-hero-emoji {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    border: 3px solid var(--gold);
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 0 16px rgba(201,168,76,0.4);
+  }
+  .drawn-hero-name {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--cream);
+    margin-bottom: 2px;
+  }
+  .drawn-hero-meta {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 10px;
+  }
+  .drawn-skill-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  .drawn-skill-box .sk-label {
+    font-size: 8px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .drawn-skill-box .sk-name { font-size: 11px; font-weight: 600; color: var(--cream); }
+  .drawn-skill-box .sk-desc { font-size: 10px; color: #888; margin-top: 2px; line-height: 1.4; }
+
+  .redraw-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .redraw-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    color: #bbb;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 7px 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+  .redraw-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); color: var(--cream); }
+  .redraw-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .redraw-btn .used-tag { display: block; font-size: 8px; color: #e05050; margin-top: 2px; }
+
+  /* Slot highlight for placement */
+  .slot.highlight-place .slot-inner {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 12px rgba(201,168,76,0.5) !important;
+    animation: pulse-gold 1s infinite alternate;
+  }
+  @keyframes pulse-gold {
+    from { box-shadow: 0 0 6px rgba(201,168,76,0.3); }
+    to   { box-shadow: 0 0 16px rgba(201,168,76,0.7); }
+  }
+
+  .draft-status {
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+    line-height: 1.5;
+    min-height: 32px;
+  }
+  .draft-status strong { color: var(--gold); }
+
+  .draft-picks-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #666;
+    margin-top: 6px;
+  }
+  .draft-picks-row span { color: var(--cream); font-weight: 600; }
+
+  .draft-intro {
+    text-align: center;
+    padding: 16px 0;
+  }
+  .draft-intro p { font-size: 12px; color: #aaa; line-height: 1.6; margin-bottom: 12px; }
+  .draft-complete {
+    text-align:center; padding: 8px 0;
+  }
+  .draft-complete p { font-size:11px; color:#aaa; margin-bottom:8px; }
+
+  /* Spinning draw animation */
+  @keyframes spin-in {
+    0%   { transform: rotateY(90deg) scale(0.7); opacity: 0; }
+    100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+  }
+  .draw-animate { animation: spin-in 0.35s ease-out; }
+
 </style>
 </head>
 <body>
 
 <header>
   <h1>⚔️ KINGSHOT FC</h1>
-  <p>4-4-2 Expedition Lineup Builder · Click any slot to assign a hero</p>
+  <p id="mode-subtitle">4-4-2 Expedition Lineup Builder</p>
 </header>
+
+<div class="mode-tabs">
+  <button class="mode-tab active" id="tab-sandbox" onclick="switchMode('sandbox')">⚙️ Sandbox</button>
+  <button class="mode-tab" id="tab-draft" onclick="switchMode('draft')">🎲 Draft Mode</button>
+</div>
 
 <div class="main-layout">
   <div>
@@ -551,6 +726,71 @@
       <button class="btn" onclick="openExport()">📋 Export Lineup</button>
       <button class="btn danger" onclick="resetAll()">⟳ Reset Entire Lineup</button>
     </div>
+  </div>
+
+  <!-- DRAFT SIDE PANEL (shown in draft mode) -->
+  <div id="draft-panel-wrap" class="right-panel" style="display:none;">
+
+    <!-- Intro state -->
+    <div class="panel-card" id="draft-intro-card">
+      <div class="panel-title">🎲 Draft Mode</div>
+      <div class="draft-intro">
+        <p>A hero will be drawn at random.<br>Place them into any open slot on the pitch.</p>
+        <p style="font-size:10px;color:#666;">You have <strong style="color:var(--gold)">1 Gen re-draw</strong> and <strong style="color:var(--gold)">1 Class re-draw</strong> for the entire draft.</p>
+        <button class="btn" onclick="startDraft()">Begin Draft</button>
+      </div>
+    </div>
+
+    <!-- Draw state -->
+    <div class="panel-card" id="draft-draw-card" style="display:none;">
+      <div class="draft-card-title">Hero Drawn</div>
+      <img id="drawn-portrait" class="drawn-hero-portrait" src="" alt="" onerror="onDrawnImgError(this)">
+      <div id="drawn-emoji" class="drawn-hero-emoji"></div>
+      <div id="drawn-name" class="drawn-hero-name"></div>
+      <div id="drawn-meta" class="drawn-hero-meta"></div>
+      <div class="drawn-skill-box">
+        <div class="sk-label">Expedition Skill 1</div>
+        <div id="drawn-skill-name" class="sk-name"></div>
+        <div id="drawn-skill-desc" class="sk-desc"></div>
+      </div>
+      <div class="redraw-row">
+        <button class="redraw-btn" id="redraw-gen-btn" onclick="redrawGen()">
+          🎲 Re-draw Gen
+          <span class="used-tag" id="redraw-gen-used" style="display:none;">Used</span>
+        </button>
+        <button class="redraw-btn" id="redraw-class-btn" onclick="redrawClass()">
+          🎲 Re-draw Class
+          <span class="used-tag" id="redraw-class-used" style="display:none;">Used</span>
+        </button>
+      </div>
+      <div class="draft-status" id="draft-status">Click an empty slot on the pitch to place this hero.</div>
+      <div class="draft-picks-row">
+        <div>Picks: <span id="draft-pick-count">0</span> / 12</div>
+        <div>Pool remaining: <span id="draft-pool-count">0</span></div>
+      </div>
+    </div>
+
+    <!-- Complete state with match result -->
+    <div class="panel-card" id="draft-complete-card" style="display:none;">
+      <div class="panel-title">🏟️ Match Result</div>
+      <div id="match-result-content"></div>
+      <hr class="divider">
+      <button class="btn secondary" onclick="resetDraft()">🔄 New Draft</button>
+    </div>
+
+    <!-- Bonuses (always visible in draft mode once picks start) -->
+    <div class="panel-card" id="draft-bonuses-card" style="display:none;">
+      <div class="panel-title">⚡ Team Bonuses</div>
+      <div id="draft-bonuses-content"><div style="color:#555;font-size:11px;text-align:center;padding:4px 0;">No picks yet</div></div>
+      <div id="draft-prob-skills"></div>
+    </div>
+
+    <!-- Export in draft mode -->
+    <div class="panel-card">
+      <div class="panel-title">📤 Share</div>
+      <button class="btn secondary" onclick="openExport()">📋 Export Lineup</button>
+    </div>
+
   </div>
 </div>
 
@@ -864,6 +1104,27 @@ function computeBonuses() {
   return t;
 }
 
+// Collect active probability-based skills (deduplicated by name — they don't stack)
+function collectProbabilitySkills() {
+  const seen = new Set();
+  const out = [];
+  SLOTS.forEach(slotId => {
+    const heroId = lineup[slotId];
+    if (!heroId) return;
+    const hero = HEROES.find(h => h.id === heroId);
+    const isCaptain = captainSlot === slotId;
+    const skills = isCaptain ? hero.expeditionSkills : [hero.expeditionSkills[0]];
+    skills.forEach(sk => {
+      if (sk.random && !seen.has(sk.name)) {
+        seen.add(sk.name);
+        out.push({ hero: hero.name, name: sk.name, desc: sk.desc });
+      }
+    });
+  });
+  return out;
+}
+
+
 function renderBonuses() {
   const t = computeBonuses();
   const container = document.getElementById('bonuses');
@@ -994,6 +1255,402 @@ function resetAll() {
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+
+// ══════════════════════════════════════
+//  MODE SWITCHING
+// ══════════════════════════════════════
+let currentMode = 'sandbox';
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tab-sandbox').classList.toggle('active', mode === 'sandbox');
+  document.getElementById('tab-draft').classList.toggle('active', mode === 'draft');
+
+  // Right panel: sandbox uses the original .right-panel, draft uses draft-panel-wrap
+  const sandboxPanel = document.querySelector('.right-panel:not(#draft-panel-wrap)');
+  const draftPanel   = document.getElementById('draft-panel-wrap');
+
+  if (mode === 'sandbox') {
+    sandboxPanel.style.display = '';
+    draftPanel.style.display = 'none';
+    // Slots go back to sandbox behaviour
+    SLOTS.forEach(s => {
+      const el = document.querySelector('[data-slot="'+s+'"]');
+      if (el) {
+        el.onclick = () => openPicker(s);
+        el.classList.remove('highlight-place');
+      }
+    });
+    document.getElementById('mode-subtitle').textContent = '4-4-2 Expedition Lineup Builder';
+  } else {
+    sandboxPanel.style.display = 'none';
+    draftPanel.style.display = '';
+    document.getElementById('mode-subtitle').textContent = '4-4-2 Draft Mode';
+    // Slots become placement targets
+    SLOTS.forEach(s => {
+      const el = document.querySelector('[data-slot="'+s+'"]');
+      if (el) el.onclick = () => placeDraftHero(s);
+    });
+    // Show bonuses panel if picks exist
+    const hasPicks = SLOTS.some(s => lineup[s]);
+    document.getElementById('draft-bonuses-card').style.display = hasPicks ? '' : 'none';
+    renderDraftBonuses();
+    updateDraftPickCount();
+  }
+}
+
+// ══════════════════════════════════════
+//  DRAFT STATE
+// ══════════════════════════════════════
+const DRAFT_POOL = HEROES.filter(h => h.rarity !== 'rare'); // exclude pure economy rares
+let draftPool = [];
+let drawnHero  = null;
+let redrawnGen   = false;
+let redrawnClass = false;
+let draftStarted = false;
+
+// CPU hidden baseline — never shown to player.
+// Tuned so a weak draft almost always loses, an average draft is a genuine
+// coin-flip, and a strong/captain-optimized draft wins reliably.
+// Effective ratings ≈ Offense 176, Defense 165.
+const CPU_BASELINE = {
+  attack: 80, defense: 82, lethality: 48, health: 45,
+  dmg_taken_down: 18, enemy_atk_down: 18, enemy_def_down: 16,
+  enemy_leth_down: 9, enemy_dmg_taken_up: 16, skill_dmg: 16
+};
+
+function resetDraft() {
+  draftPool = [...DRAFT_POOL];
+  drawnHero = null;
+  redrawnGen = false;
+  redrawnClass = false;
+  draftStarted = false;
+  SLOTS.forEach(s => delete lineup[s]);
+  captainSlot = null;
+  activeSlot = null;
+
+  document.getElementById('draft-intro-card').style.display = '';
+  document.getElementById('draft-draw-card').style.display = 'none';
+  document.getElementById('draft-complete-card').style.display = 'none';
+  document.getElementById('draft-bonuses-card').style.display = 'none';
+
+  SLOTS.forEach(s => {
+    const el = document.querySelector('[data-slot="'+s+'"]');
+    if (el) el.classList.remove('highlight-place');
+  });
+  renderAll();
+}
+
+function startDraft() {
+  resetDraft();
+  draftStarted = true;
+  document.getElementById('draft-intro-card').style.display = 'none';
+  document.getElementById('draft-draw-card').style.display = '';
+  drawNextHero();
+}
+
+// ── DRAWING ──
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function drawNextHero() {
+  if (draftPool.length === 0 || SLOTS.every(s => lineup[s])) {
+    finishDraft(); return;
+  }
+  // Pick a random gen from remaining pool
+  const availableGens = [...new Set(draftPool.map(h => h.gen))];
+  const chosenGen = randomFrom(availableGens);
+  // Pick a random class from that gen in remaining pool
+  const inGen = draftPool.filter(h => h.gen === chosenGen);
+  const availableClasses = [...new Set(inGen.map(h => h.class))];
+  const chosenClass = randomFrom(availableClasses);
+  // Pick a specific hero
+  const candidates = inGen.filter(h => h.class === chosenClass);
+  drawnHero = randomFrom(candidates);
+
+  showDrawnHero();
+}
+
+function showDrawnHero(animate = true) {
+  const hero = drawnHero;
+  const card = document.getElementById('draft-draw-card');
+  if (animate) card.classList.remove('draw-animate');
+
+  const portrait = document.getElementById('drawn-portrait');
+  const emoji    = document.getElementById('drawn-emoji');
+  portrait.src = heroImgUrl(hero.id);
+  portrait.style.display = 'block';
+  emoji.style.display = 'none';
+  emoji.textContent = hero.emoji;
+
+  document.getElementById('drawn-name').textContent = hero.name;
+  document.getElementById('drawn-meta').textContent =
+    capitalize(hero.class) + '  ·  ' + hero.rarity.charAt(0).toUpperCase()+hero.rarity.slice(1) + '  ·  ' + hero.gen;
+
+  const sk = hero.expeditionSkills[0];
+  document.getElementById('drawn-skill-name').textContent = sk.name;
+  document.getElementById('drawn-skill-desc').textContent = sk.desc;
+
+  // Redraw buttons
+  document.getElementById('redraw-gen-btn').disabled  = redrawnGen;
+  document.getElementById('redraw-class-btn').disabled = redrawnClass;
+  document.getElementById('redraw-gen-used').style.display  = redrawnGen ? '' : 'none';
+  document.getElementById('redraw-class-used').style.display = redrawnClass ? '' : 'none';
+
+  // Highlight empty slots
+  highlightEmptySlots();
+  document.getElementById('draft-status').innerHTML = 'Click an empty slot on the pitch to place <strong style="color:var(--gold)">' + hero.name + '</strong>.';
+  updateDraftPickCount();
+
+  if (animate) {
+    setTimeout(() => card.classList.add('draw-animate'), 10);
+  }
+}
+
+function onDrawnImgError(img) {
+  img.style.display = 'none';
+  const emoji = document.getElementById('drawn-emoji');
+  emoji.style.display = 'flex';
+}
+
+function highlightEmptySlots() {
+  SLOTS.forEach(s => {
+    const el = document.querySelector('[data-slot="'+s+'"]');
+    if (!el) return;
+    if (!lineup[s]) el.classList.add('highlight-place');
+    else el.classList.remove('highlight-place');
+  });
+}
+
+function updateDraftPickCount() {
+  const filled = SLOTS.filter(s => lineup[s]).length;
+  const el = document.getElementById('draft-pick-count');
+  const poolEl = document.getElementById('draft-pool-count');
+  if (el) el.textContent = filled;
+  if (poolEl) poolEl.textContent = draftPool.length;
+}
+
+// ── PLACEMENT ──
+function placeDraftHero(slotId) {
+  if (currentMode !== 'draft' || !drawnHero || !draftStarted) return;
+  if (lineup[slotId]) {
+    document.getElementById('draft-status').innerHTML = 'That slot is already filled. Pick an empty slot.';
+    return;
+  }
+  // Place the hero
+  lineup[slotId] = drawnHero.id;
+  // Remove from pool
+  draftPool = draftPool.filter(h => h.id !== drawnHero.id);
+  drawnHero = null;
+
+  SLOTS.forEach(s => {
+    const el = document.querySelector('[data-slot="'+s+'"]');
+    if (el) el.classList.remove('highlight-place');
+  });
+
+  renderSlot(slotId);
+  document.getElementById('draft-bonuses-card').style.display = '';
+  renderDraftBonuses();
+  updateDraftPickCount();
+
+  // Check if all slots filled
+  if (SLOTS.every(s => lineup[s])) {
+    finishDraft();
+  } else {
+    // Short delay then draw next
+    setTimeout(drawNextHero, 400);
+  }
+}
+
+// ── REDRAWS ──
+function redrawGen() {
+  if (redrawnGen || !drawnHero) return;
+  redrawnGen = true;
+  // Remove current drawn hero's gen from next draw (pick a different gen)
+  const currentGen = drawnHero.gen;
+  const otherGens = [...new Set(draftPool.map(h => h.gen))].filter(g => g !== currentGen);
+  if (otherGens.length === 0) {
+    // No other gens available — redraw within same gen
+    drawNextHero(); return;
+  }
+  const newGen = randomFrom(otherGens);
+  const inGen = draftPool.filter(h => h.gen === newGen);
+  const availableClasses = [...new Set(inGen.map(h => h.class))];
+  const newClass = randomFrom(availableClasses);
+  const candidates = inGen.filter(h => h.class === newClass);
+  drawnHero = randomFrom(candidates);
+  showDrawnHero();
+}
+
+function redrawClass() {
+  if (redrawnClass || !drawnHero) return;
+  redrawnClass = true;
+  // Keep the same gen, pick a different class
+  const currentGen   = drawnHero.gen;
+  const currentClass = drawnHero.class;
+  const inGen = draftPool.filter(h => h.gen === currentGen);
+  const otherClasses = [...new Set(inGen.map(h => h.class))].filter(c => c !== currentClass);
+  if (otherClasses.length === 0) {
+    // Same gen has only one class — redraw within it
+    const candidates = inGen;
+    drawnHero = randomFrom(candidates);
+  } else {
+    const newClass = randomFrom(otherClasses);
+    const candidates = inGen.filter(h => h.class === newClass);
+    drawnHero = randomFrom(candidates);
+  }
+  showDrawnHero();
+}
+
+// ── FINISH + MATCH SIMULATION ──
+function finishDraft() {
+  document.getElementById('draft-draw-card').style.display = 'none';
+  document.getElementById('draft-complete-card').style.display = '';
+  SLOTS.forEach(s => {
+    const el = document.querySelector('[data-slot="'+s+'"]');
+    if (el) el.classList.remove('highlight-place');
+  });
+  renderAll();
+  simulateMatch();
+}
+
+// Build an offensive & defensive rating from a bonus-set.
+// Offense: your scoring power. Attack + Lethality + skill damage, plus the
+//   enemy's defense/health you've stripped away (those help you score).
+// Defense: your goal prevention. Defense + Health + damage-taken reduction,
+//   plus the enemy attack/lethality you've suppressed.
+function ratingsFrom(b) {
+  const offense = (b.attack||0) + (b.lethality||0) + (b.skill_dmg||0)
+                + (b.enemy_def_down||0) + (b.enemy_dmg_taken_up||0);
+  const defense = (b.defense||0) + (b.health||0) + (b.dmg_taken_down||0)
+                + (b.enemy_atk_down||0) + (b.enemy_leth_down||0);
+  return { offense, defense };
+}
+
+// Count active probability skills → each adds a small random swing factor.
+function probSwing() {
+  const n = collectProbabilitySkills().length;
+  // Each chance-based skill can swing the match ±, capped so it stays fun not chaotic
+  let swing = 0;
+  for (let i = 0; i < n; i++) {
+    swing += (Math.random() - 0.45) * 6; // slight positive lean, ~±3 per skill
+  }
+  return swing;
+}
+
+// Convert an offense-vs-defense matchup into an expected goals number,
+// then roll actual goals around it.
+function rollGoals(offense, oppDefense, swing) {
+  // Base expected goals: midpoint ~1.4, scaled by how much offense beats defense
+  const edge = (offense - oppDefense) / 40;       // every 40 net pts ≈ +1 xG
+  let xg = 1.4 + edge + swing / 30;
+  if (xg < 0.15) xg = 0.15;
+  // Poisson-ish draw using the xG as mean
+  return poissonSample(xg);
+}
+
+function poissonSample(lambda) {
+  // Knuth's algorithm
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+
+function simulateMatch() {
+  const playerBonus = computeBonuses();
+  const pr = ratingsFrom(playerBonus);
+  const cr = ratingsFrom(CPU_BASELINE);
+
+  // Two independent swings from the player's chance-based skills (one for each half-ish)
+  const swingA = probSwing();
+  const swingB = probSwing();
+
+  let playerScore = rollGoals(pr.offense, cr.defense, swingA);
+  let cpuScore    = rollGoals(cr.offense, pr.defense, -swingB * 0.7); // player's luck slightly dampens CPU too
+
+  // Render the result
+  const won  = playerScore > cpuScore;
+  const draw = playerScore === cpuScore;
+  const verdict = won ? 'WIN' : draw ? 'DRAW' : 'LOSS';
+  const color   = won ? '#5dcc88' : draw ? '#c9a84c' : '#e05d5d';
+  const emoji   = won ? '🏆' : draw ? '🤝' : '😞';
+
+  const el = document.getElementById('match-result-content');
+  el.innerHTML = `
+    <div style="text-align:center;padding:4px 0 10px;">
+      <div style="font-size:11px;color:#888;letter-spacing:0.15em;margin-bottom:4px;">FINAL SCORE</div>
+      <div style="font-family:'Cinzel',serif;font-size:38px;color:var(--cream);line-height:1;">
+        ${playerScore} <span style="color:#555;font-size:24px;">–</span> ${cpuScore}
+      </div>
+      <div style="margin-top:8px;font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:${color};letter-spacing:0.1em;">
+        ${emoji} ${verdict}
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">Your FC vs. Fes FC 🎩</div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;color:#aaa;justify-content:center;margin-top:4px;">
+      <span title="Your scoring power">⚔️ Off ${pr.offense}</span>
+      <span style="color:#444;">|</span>
+      <span title="Your goal prevention">🛡️ Def ${pr.defense}</span>
+    </div>
+    <button class="btn" style="margin-top:12px;" onclick="rematch()">🔁 Replay Match (same teams)</button>
+  `;
+}
+
+// Re-run the sim without re-drafting (chance skills make it vary)
+function rematch() {
+  simulateMatch();
+}
+
+
+function renderDraftBonuses() {
+  const t = computeBonuses();
+  const container = document.getElementById('draft-bonuses-content');
+  const rows = [
+    {key:'attack',            label:'Attack',        cls:'attack'},
+    {key:'defense',           label:'Defense',       cls:'defense'},
+    {key:'lethality',         label:'Lethality',     cls:'lethality'},
+    {key:'health',            label:'Health',        cls:'health'},
+    {key:'dmg_taken_down',    label:'Dmg Taken ↓',   cls:'defense'},
+    {key:'enemy_atk_down',    label:'Enemy Atk ↓',   cls:'attack'},
+    {key:'enemy_def_down',    label:'Enemy Def ↓',   cls:'defense'},
+    {key:'enemy_leth_down',   label:'Enemy Leth ↓',  cls:'lethality'},
+    {key:'enemy_dmg_taken_up',label:'Enemy Dmg ↑',   cls:'attack'},
+    {key:'skill_dmg',         label:'Skill Damage',  cls:'lethality'},
+  ].filter(r => t[r.key] > 0);
+  if (!rows.length) {
+    container.innerHTML = '<div style="color:#555;font-size:11px;text-align:center;padding:4px 0;">No picks yet</div>';
+  } else {
+    const maxVal = Math.max(...rows.map(r => t[r.key]), 1);
+    container.innerHTML = rows.map(r => `<div class="stat-row">
+      <span class="stat-label" style="width:72px">${r.label}</span>
+      <div class="stat-bar-wrap"><div class="stat-bar ${r.cls}" style="width:${Math.min(100,t[r.key]/maxVal*100)}%"></div></div>
+      <span class="stat-val">+${t[r.key]}%</span>
+    </div>`).join('');
+  }
+  renderProbSkills();
+}
+
+// Render the deduplicated probability skills list below the aggregated stats
+function renderProbSkills() {
+  const el = document.getElementById('draft-prob-skills');
+  if (!el) return;
+  const probs = collectProbabilitySkills();
+  if (!probs.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <hr class="divider">
+    <div style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">🎲 Chance-Based Skills (don't stack)</div>
+    ${probs.map(p => `<div style="font-size:10px;color:#aaa;margin-bottom:5px;line-height:1.4;">
+      <span style="color:var(--cream);font-weight:600;">${p.name}</span>
+      <span style="color:#666;">· ${p.hero}</span><br>
+      <span style="color:#777;font-size:9px;">${p.desc}</span>
+    </div>`).join('')}`;
+}
+
+// Init draft pool on load
+draftPool = [...DRAFT_POOL];
+
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
 renderAll();
 
@@ -1039,6 +1696,7 @@ function copyExport() {
   });
 }
 </script>
+
 
 <!-- EXPORT MODAL -->
 <div class="modal-overlay" id="export-modal">
