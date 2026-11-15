@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GetzHub</title>
+  <meta name="description" content="GetzHub is a private home monitoring and control hub that its owner runs on a server at home.">
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --text: #1b2330;
+      --muted: #566173;
+      --border: #d9dde3;
+      --accent: #1a5fd0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11151b;
+        --surface: #1a2029;
+        --text: #e8ecf2;
+        --muted: #a3adbb;
+        --border: #2d3644;
+        --accent: #7fb0ff;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    header, main, footer { max-width: 44rem; margin: 0 auto; padding: 0 16px; }
+    header { padding-top: 40px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    h1 { margin: 0; font-size: 2rem; line-height: 1.2; }
+    h2 { margin: 32px 0 8px; font-size: 1.25rem; line-height: 1.3; }
+    p, ul { margin: 0 0 14px; }
+    ul { padding-left: 1.3em; }
+    li { margin-bottom: 6px; }
+    a { color: var(--accent); }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+    main {
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    main > :first-child { margin-top: 0; }
+    main > :last-child { margin-bottom: 0; }
+    nav { margin-top: 16px; }
+    nav a { margin-right: 16px; }
+    footer { padding: 20px 16px 48px; color: var(--muted); font-size: 0.9rem; }
+    @media (max-width: 30rem) {
+      main { padding: 18px; border-radius: 0; border-left: 0; border-right: 0; }
+      header, footer { padding-left: 16px; padding-right: 16px; }
+      main { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GetzHub</h1>
+    <p>A private home monitoring and control hub</p>
+    <nav aria-label="Pages">
+      <a href="./" aria-current="page">Home</a>
+      <a href="privacy.html">Privacy policy</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>What GetzHub is</h2>
+    <p>GetzHub is a home monitoring and control system that its owner built and runs on a server in their own home. It is a personal project for one household. It is not a product or a service, and nobody else can sign up for it or use it.</p>
+
+    <h2>What it does</h2>
+    <ul>
+      <li>Shows the current state of devices in the home on a dashboard: televisions, smart plugs, a light switch, speakers and a thermostat.</li>
+      <li>Lets members of the household control those devices from that dashboard.</li>
+      <li>Runs simple rules the owner writes, such as raising an alert when something is left on.</li>
+    </ul>
+
+    <h2>How it uses Google</h2>
+    <p>GetzHub connects to the owner's Google Nest thermostat through Google's Smart Device Management API. With the owner's permission it reads the thermostat's temperature, humidity, mode and target temperatures, and it changes the mode or target temperatures when someone in the household asks it to.</p>
+    <p>The <a href="privacy.html">privacy policy</a> describes exactly what is read, where it is kept and how to withdraw permission.</p>
+
+    <h2>Contact</h2>
+    <p>If you are a member of the household and have a question, ask the owner. Google's permission screen for GetzHub also shows the developer's contact address.</p>
+  </main>
+
+  <footer>
+    <p>Google and Nest are trademarks of Google LLC. GetzHub is an independent personal project and is not affiliated with or endorsed by Google.</p>
+  </footer>
+</body>
+</html>
